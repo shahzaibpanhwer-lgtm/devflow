@@ -1,0 +1,409 @@
+// DevFlow database schema.
+//
+// Identifiers are cuid()s rather than sequential integers so records can be
+// exposed in URLs and API responses without leaking table volume or ordering.
+// Every table that is queried by a foreign key or sorted by time carries an
+// explicit index — analytics reads scan large ranges of ApiRequest.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Prisma 7 no longer accepts a connection URL here — it lives in
+// prisma.config.ts for the CLI, and reaches the client through a driver
+// adapter. See src/lib/db.ts.
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum ProjectStatus {
+  DEVELOPMENT
+  PRODUCTION
+  PAUSED
+  ARCHIVED
+}
+
+enum DeploymentStatus {
+  QUEUED
+  BUILDING
+  TESTING
+  DEPLOYING
+  SUCCESS
+  FAILED
+}
+
+enum DeploymentEnvironment {
+  PRODUCTION
+  PREVIEW
+  DEVELOPMENT
+}
+
+enum TeamRole {
+  OWNER
+  ADMIN
+  DEVELOPER
+  VIEWER
+}
+
+enum ActivityType {
+  PROJECT_CREATED
+  PROJECT_UPDATED
+  PROJECT_DELETED
+  DEPLOYMENT_CREATED
+  DEPLOYMENT_SUCCEEDED
+  DEPLOYMENT_FAILED
+  REPOSITORY_CONNECTED
+  REPOSITORY_DISCONNECTED
+  API_KEY_CREATED
+  API_KEY_REVOKED
+  MEMBER_INVITED
+  MEMBER_REMOVED
+  MEMBER_ROLE_CHANGED
+}
+
+// ---------------------------------------------------------------------------
+// Identity — User, Account, Session and VerificationToken
+//
+// Account, Session and VerificationToken match the shapes the Auth.js Prisma
+// adapter expects; renaming their columns breaks the adapter.
+// ---------------------------------------------------------------------------
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+
+  /// Null for accounts created purely through GitHub OAuth.
+  passwordHash String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  accounts        Account[]
+  sessions        Session[]
+  projects        Project[]
+  activities      Activity[]
+  teamMemberships TeamMember[]
+  apiKeys         ApiKey[]
+
+  @@index([createdAt])
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// ---------------------------------------------------------------------------
+// Teams
+// ---------------------------------------------------------------------------
+
+model Team {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  members    TeamMember[]
+  projects   Project[]
+  activities Activity[]
+
+  @@map("teams")
+}
+
+model TeamMember {
+  id     String   @id @default(cuid())
+  teamId String
+  userId String
+  role   TeamRole @default(DEVELOPER)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// A user holds at most one role per team.
+  @@unique([teamId, userId])
+  @@index([userId])
+  @@index([teamId])
+  @@map("team_members")
+}
+
+// ---------------------------------------------------------------------------
+// Projects
+// ---------------------------------------------------------------------------
+
+model Project {
+  id          String        @id @default(cuid())
+  name        String
+  /// Public identifier used by /p/[slug]; unique across the whole workspace.
+  slug        String        @unique
+  description String?
+  framework   String?
+  status      ProjectStatus @default(DEVELOPMENT)
+
+  /// Deployed application URL.
+  productionUrl String?
+  /// Full clone/browse URL of the source repository.
+  repositoryUrl String?
+  /// Convenience "owner/name" handle used when calling the GitHub API.
+  githubRepository String?
+
+  ownerId String
+  teamId  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  owner       User            @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  team        Team?           @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  repository  Repository?
+  deployments Deployment[]
+  apiKeys     ApiKey[]
+  docs        Documentation[]
+  activities  Activity[]
+  apiRequests ApiRequest[]
+
+  @@index([ownerId])
+  @@index([teamId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("projects")
+}
+
+/// GitHub metadata for a connected repository, refreshed from the GitHub API.
+/// One repository per project, so the foreign key is unique.
+model Repository {
+  id        String @id @default(cuid())
+  projectId String @unique
+
+  githubId      BigInt?
+  name          String
+  fullName      String
+  description   String?
+  url           String
+  defaultBranch String  @default("main")
+  language      String?
+  stars         Int     @default(0)
+  forks         Int     @default(0)
+  openIssues    Int     @default(0)
+  isPrivate     Boolean @default(false)
+
+  pushedAt     DateTime?
+  lastSyncedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([fullName])
+  @@map("repositories")
+}
+
+// ---------------------------------------------------------------------------
+// Deployments
+// ---------------------------------------------------------------------------
+
+model Deployment {
+  id        String @id @default(cuid())
+  projectId String
+
+  version     String
+  environment DeploymentEnvironment @default(PRODUCTION)
+  status      DeploymentStatus      @default(QUEUED)
+
+  /// Wall-clock build time in milliseconds; null while still running.
+  durationMs Int?
+
+  commitSha     String?
+  commitMessage String?
+  branch        String?
+
+  /// Ordered log lines: [{ timestamp, level, message }].
+  logs Json?
+
+  startedAt   DateTime?
+  completedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  project    Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  activities Activity[]
+
+  @@index([projectId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([projectId, createdAt])
+  @@map("deployments")
+}
+
+// ---------------------------------------------------------------------------
+// API keys
+// ---------------------------------------------------------------------------
+
+/// Only a hash of each key is stored. The plaintext secret is returned once,
+/// at creation time, and is unrecoverable afterwards.
+model ApiKey {
+  id        String  @id @default(cuid())
+  projectId String
+  userId    String
+  name      String
+
+  /// SHA-256 of the full secret. Unique so lookups can hit the index directly.
+  hashedKey String @unique
+  /// Non-secret display fragment, e.g. "dfk_live_a1b2".
+  prefix    String
+  /// Last four characters, shown alongside the prefix for identification.
+  lastFour  String
+
+  lastUsedAt DateTime?
+  revokedAt  DateTime?
+  expiresAt  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  project  Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user     User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  requests ApiRequest[]
+
+  @@index([projectId])
+  @@index([userId])
+  @@map("api_keys")
+}
+
+// ---------------------------------------------------------------------------
+// Documentation
+// ---------------------------------------------------------------------------
+
+model Documentation {
+  id        String @id @default(cuid())
+  projectId String
+
+  title    String
+  slug     String
+  category String  @default("Guides")
+  /// Markdown body.
+  content  String  @db.Text
+  /// Manual ordering within a category.
+  position Int     @default(0)
+  published Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, slug])
+  @@index([projectId])
+  @@map("documentation")
+}
+
+// ---------------------------------------------------------------------------
+// Activity and API telemetry
+// ---------------------------------------------------------------------------
+
+model Activity {
+  id   String       @id @default(cuid())
+  type ActivityType
+
+  /// Human-readable summary rendered directly in the timeline.
+  message String
+
+  /// Type-specific extras, e.g. { "version": "v1.4.2" }.
+  metadata Json?
+
+  userId       String
+  projectId    String?
+  teamId       String?
+  deploymentId String?
+
+  createdAt DateTime @default(now())
+
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project    Project?    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  team       Team?       @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  deployment Deployment? @relation(fields: [deploymentId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([projectId])
+  @@index([teamId])
+  @@index([createdAt])
+  @@map("activities")
+}
+
+/// One row per request served by the DevFlow API. Analytics aggregates this
+/// table over time windows, so it is indexed by timestamp and by project.
+model ApiRequest {
+  id String @id @default(cuid())
+
+  method     String
+  path       String
+  statusCode Int
+  durationMs Int
+
+  projectId String?
+  apiKeyId  String?
+
+  ipAddress String?
+  userAgent String?
+
+  createdAt DateTime @default(now())
+
+  project Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  apiKey  ApiKey?  @relation(fields: [apiKeyId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([projectId, createdAt])
+  @@index([statusCode])
+  @@map("api_requests")
+}
