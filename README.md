@@ -95,7 +95,7 @@ metrics that genuinely demand attention.
 ## Roadmap
 
 - [x] **Phase 1** — Project initialisation, tooling, design tokens
-- [ ] **Phase 2** — Design system primitives, app shell, landing page
+- [x] **Phase 2** — Design system primitives, app shell, landing page
 - [ ] **Phase 3** — Database schema, migrations, seed data
 - [ ] **Phase 4** — Authentication (credentials + GitHub OAuth)
 - [ ] **Phase 5** — Project CRUD
