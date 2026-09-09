@@ -21,19 +21,19 @@ Manage projects, deployments, APIs, GitHub activity and team workflows from one 
 
 ## Tech stack
 
-| Layer          | Choice                                                |
-| -------------- | ----------------------------------------------------- |
-| Framework      | Next.js (App Router, Server Components)               |
-| Language       | TypeScript, strict mode                               |
-| Styling        | Tailwind CSS v4, shadcn/ui, Radix primitives          |
-| Motion         | Framer Motion                                         |
-| Icons          | Lucide React                                          |
-| Database       | PostgreSQL via Prisma ORM                             |
-| Authentication | Auth.js — credentials + GitHub OAuth                  |
-| Integrations   | GitHub REST API                                       |
-| Charts         | Recharts                                              |
-| Validation     | Zod                                                   |
-| Testing        | Vitest (unit/API), Playwright (E2E)                   |
+| Layer          | Choice                                       |
+| -------------- | -------------------------------------------- |
+| Framework      | Next.js (App Router, Server Components)      |
+| Language       | TypeScript, strict mode                      |
+| Styling        | Tailwind CSS v4, shadcn/ui, Radix primitives |
+| Motion         | Framer Motion                                |
+| Icons          | Lucide React                                 |
+| Database       | PostgreSQL via Prisma ORM                    |
+| Authentication | Auth.js — credentials + GitHub OAuth         |
+| Integrations   | GitHub REST API                              |
+| Charts         | Recharts                                     |
+| Validation     | Zod                                          |
+| Testing        | Vitest (unit/API), Playwright (E2E)          |
 
 ## Getting started
 
@@ -52,26 +52,26 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Environment variables
 
-| Variable               | Description                                                |
-| ---------------------- | ---------------------------------------------------------- |
-| `DATABASE_URL`         | PostgreSQL connection string used by Prisma                |
-| `AUTH_SECRET`          | Session signing secret — generate with `npx auth secret`   |
-| `GITHUB_CLIENT_ID`     | GitHub OAuth app client ID                                 |
-| `GITHUB_CLIENT_SECRET` | GitHub OAuth app client secret                             |
+| Variable               | Description                                              |
+| ---------------------- | -------------------------------------------------------- |
+| `DATABASE_URL`         | PostgreSQL connection string used by Prisma              |
+| `AUTH_SECRET`          | Session signing secret — generate with `npx auth secret` |
+| `GITHUB_CLIENT_ID`     | GitHub OAuth app client ID                               |
+| `GITHUB_CLIENT_SECRET` | GitHub OAuth app client secret                           |
 
 See [`.env.example`](.env.example). Real credentials are never committed.
 
 ## Commands
 
-| Command                | What it does                          |
-| ---------------------- | ------------------------------------- |
-| `npm run dev`          | Start the development server          |
-| `npm run build`        | Production build                      |
-| `npm run start`        | Serve the production build            |
-| `npm run lint`         | ESLint                                |
-| `npm run typecheck`    | TypeScript, no emit                   |
-| `npm run format`       | Prettier write                        |
-| `npm run format:check` | Prettier check                        |
+| Command                | What it does                 |
+| ---------------------- | ---------------------------- |
+| `npm run dev`          | Start the development server |
+| `npm run build`        | Production build             |
+| `npm run start`        | Serve the production build   |
+| `npm run lint`         | ESLint                       |
+| `npm run typecheck`    | TypeScript, no emit          |
+| `npm run format`       | Prettier write               |
+| `npm run format:check` | Prettier check               |
 
 ## Design system
 
@@ -80,14 +80,14 @@ DevFlow is dark-first. The token layer lives in
 shadcn's semantic variables are mapped onto DevFlow tokens so every generated
 component inherits the theme.
 
-| Token          | Value     | Role                                  |
-| -------------- | --------- | ------------------------------------- |
-| `surface-0`    | `#0B0D0F` | Page background                       |
-| `surface-1`    | `#101316` | Cards and panels                      |
-| `surface-2`    | `#15191C` | Raised surfaces, hover states         |
-| `surface-3`    | `#1B2124` | Inputs, active states                 |
+| Token          | Value     | Role                                   |
+| -------------- | --------- | -------------------------------------- |
+| `surface-0`    | `#0B0D0F` | Page background                        |
+| `surface-1`    | `#101316` | Cards and panels                       |
+| `surface-2`    | `#15191C` | Raised surfaces, hover states          |
+| `surface-3`    | `#1B2124` | Inputs, active states                  |
 | `brand-500`    | `#FF6319` | Electric orange accent — used sparsely |
-| `text-primary` | `#F4F6F7` | Primary copy                          |
+| `text-primary` | `#F4F6F7` | Primary copy                           |
 
 The accent is reserved for primary CTAs, active navigation, focus rings and
 metrics that genuinely demand attention.
