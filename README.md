@@ -41,12 +41,27 @@ Manage projects, deployments, APIs, GitHub activity and team workflows from one 
 # 1. Install dependencies
 npm install
 
-# 2. Configure environment
-cp .env.example .env    # then fill in the values
+# 2. Start a local PostgreSQL server (no credentials needed)
+npx prisma dev -n devflow -d
 
-# 3. Run the development server
+# 3. Configure environment
+cp .env.example .env
+#    Set DATABASE_URL to the string prisma dev printed, with the
+#    database name changed to "devflow". Generate AUTH_SECRET with:
+#    node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
+
+# 4. Create the schema and load development data
+npm run db:migrate
+npm run db:seed
+
+# 5. Run the development server
 npm run dev
 ```
+
+Sign in with **demo@devflow.app** / **devflow123**.
+
+> Already have PostgreSQL installed? Skip step 2 and point `DATABASE_URL` at
+> your own server instead — the schema is standard PostgreSQL.
 
 Open [http://localhost:3000](http://localhost:3000).
 
@@ -96,7 +111,7 @@ metrics that genuinely demand attention.
 
 - [x] **Phase 1** — Project initialisation, tooling, design tokens
 - [x] **Phase 2** — Design system primitives, app shell, landing page
-- [ ] **Phase 3** — Database schema, migrations, seed data
+- [x] **Phase 3** — Database schema, migrations, seed data
 - [ ] **Phase 4** — Authentication (credentials + GitHub OAuth)
 - [ ] **Phase 5** — Project CRUD
 - [ ] **Phase 6** — Dashboard
