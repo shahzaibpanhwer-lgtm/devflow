@@ -53,3 +53,7 @@ next-env.d.ts
 .idea/
 .vscode/*
 !.vscode/extensions.json
+
+# Next.js auto-generated agent instructions
+AGENTS.md
+CLAUDE.md
