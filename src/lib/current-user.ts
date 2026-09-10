@@ -1,15 +1,33 @@
-import type { SessionUser } from "@/components/layout/user-menu";
+import { auth } from "@/lib/auth";
+
+export type CurrentUser = {
+  id: string;
+  name: string;
+  email: string;
+  image: string | null;
+};
 
 /**
- * Placeholder identity for the application shell.
+ * Resolves the signed-in user from the Auth.js session.
  *
- * The authentication phase replaces this single export with the Auth.js
- * session lookup; keeping it in one module means nothing else in the shell has
- * to change when that happens.
+ * Returns null when there is no session. Route protection lives in middleware,
+ * so callers inside /dashboard can treat null as "should not happen" and
+ * redirect defensively rather than rendering a signed-out state.
  */
-export function getCurrentUser(): SessionUser {
+export async function getCurrentUser(): Promise<CurrentUser | null> {
+  const session = await auth();
+  const user = session?.user;
+
+  if (!user?.id || !user.email) {
+    return null;
+  }
+
   return {
-    name: "Shahzaib Panhwer",
-    email: "shahzaib@devflow.app",
+    id: user.id,
+    // GitHub accounts without a display name fall back to the local part of
+    // the address so the interface never renders an empty avatar or greeting.
+    name: user.name ?? user.email.split("@")[0] ?? "there",
+    email: user.email,
+    image: user.image ?? null,
   };
 }

@@ -88,6 +88,24 @@ See [`.env.example`](.env.example). Real credentials are never committed.
 | `npm run format`       | Prettier write               |
 | `npm run format:check` | Prettier check               |
 
+## Authentication
+
+Auth.js (v5) with JWT-backed sessions.
+
+- **Credentials** — bcrypt hashes at cost 12, Zod-validated on both sides
+- **GitHub OAuth** — registered only when `GITHUB_CLIENT_ID` and
+  `GITHUB_CLIENT_SECRET` are present, so a missing OAuth app degrades the
+  button to an explanatory note instead of crashing sign-in
+- **Route protection** — `src/proxy.ts` blocks unauthenticated requests before
+  they reach any `/dashboard` segment, with a second check in the dashboard
+  layout
+- **Rate limiting** — registration is capped at 5 attempts per 15 minutes per
+  client
+
+Sign-in failures never reveal whether an address is registered, and a request
+for a password-less (OAuth-only) account still runs a bcrypt comparison so
+response timing cannot be used to enumerate accounts.
+
 ## Design system
 
 DevFlow is dark-first. The token layer lives in
@@ -112,7 +130,7 @@ metrics that genuinely demand attention.
 - [x] **Phase 1** — Project initialisation, tooling, design tokens
 - [x] **Phase 2** — Design system primitives, app shell, landing page
 - [x] **Phase 3** — Database schema, migrations, seed data
-- [ ] **Phase 4** — Authentication (credentials + GitHub OAuth)
+- [x] **Phase 4** — Authentication (credentials + GitHub OAuth)
 - [ ] **Phase 5** — Project CRUD
 - [ ] **Phase 6** — Dashboard
 - [ ] **Phase 7** — GitHub integration

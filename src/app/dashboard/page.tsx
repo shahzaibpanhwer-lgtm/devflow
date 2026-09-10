@@ -16,14 +16,14 @@ export const metadata: Metadata = {
   title: "Overview",
 };
 
-export default function DashboardOverviewPage() {
-  const user = getCurrentUser();
+export default async function DashboardOverviewPage() {
+  const user = await getCurrentUser();
 
   return (
     <div className="space-y-6">
       <header className="space-y-1.5 pb-2">
         <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">
-          <Greeting name={user.name} />
+          <Greeting name={user?.name} />
         </h1>
         <p className="text-text-secondary text-sm">
           Here&rsquo;s what&rsquo;s happening across your projects.

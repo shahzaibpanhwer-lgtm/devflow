@@ -144,7 +144,7 @@ export default function LandingPage() {
             </p>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
               <Button asChild size="lg">
-                <Link href="/dashboard">
+                <Link href="/register">
                   Start Building
                   <ArrowRightIcon aria-hidden="true" />
                 </Link>

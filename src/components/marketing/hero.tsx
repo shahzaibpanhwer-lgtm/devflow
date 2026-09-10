@@ -33,9 +33,8 @@ export function Hero() {
         </FadeIn>
 
         <FadeIn delay={0.08} className="mt-9 flex flex-wrap items-center justify-center gap-3">
-          {/* Repointed at /register once the authentication phase lands. */}
           <Button asChild size="lg">
-            <Link href="/dashboard">
+            <Link href="/register">
               Start Building
               <ArrowRightIcon aria-hidden="true" />
             </Link>

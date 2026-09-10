@@ -1,6 +1,7 @@
 "use client";
 
 import { LogOutIcon, SettingsIcon, UserIcon } from "lucide-react";
+import { signOut } from "next-auth/react";
 import Link from "next/link";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -30,11 +31,9 @@ function initialsOf(name: string): string {
 
 type UserMenuProps = {
   user: SessionUser;
-  /** Wired to Auth.js `signOut` once authentication lands. */
-  onSignOut?: () => void;
 };
 
-export function UserMenu({ user, onSignOut }: UserMenuProps) {
+export function UserMenu({ user }: UserMenuProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -69,15 +68,11 @@ export function UserMenu({ user, onSignOut }: UserMenuProps) {
             Settings
           </Link>
         </DropdownMenuItem>
-        {onSignOut ? (
-          <>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={onSignOut}>
-              <LogOutIcon aria-hidden="true" />
-              Sign out
-            </DropdownMenuItem>
-          </>
-        ) : null}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onSelect={() => void signOut({ callbackUrl: "/" })}>
+          <LogOutIcon aria-hidden="true" />
+          Sign out
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
