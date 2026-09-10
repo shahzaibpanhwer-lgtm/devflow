@@ -41,10 +41,10 @@ export function SiteHeader() {
 
         <div className="ml-auto flex items-center gap-2">
           <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
-            <Link href="/dashboard">Open workspace</Link>
+            <Link href="/login">Sign in</Link>
           </Button>
           <Button asChild size="sm" className="hidden sm:inline-flex">
-            <Link href="/dashboard">Start Building</Link>
+            <Link href="/register">Start Building</Link>
           </Button>
           <Button
             variant="ghost"
@@ -73,7 +73,7 @@ export function SiteHeader() {
               </a>
             ))}
             <Button asChild size="sm" className="my-3">
-              <Link href="/dashboard">Start Building</Link>
+              <Link href="/register">Start Building</Link>
             </Button>
           </nav>
         </div>
