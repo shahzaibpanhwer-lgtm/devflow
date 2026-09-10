@@ -131,7 +131,7 @@ metrics that genuinely demand attention.
 - [x] **Phase 2** — Design system primitives, app shell, landing page
 - [x] **Phase 3** — Database schema, migrations, seed data
 - [x] **Phase 4** — Authentication (credentials + GitHub OAuth)
-- [ ] **Phase 5** — Project CRUD
+- [x] **Phase 5** — Project CRUD
 - [ ] **Phase 6** — Dashboard
 - [ ] **Phase 7** — GitHub integration
 - [ ] **Phase 8** — Deployments
