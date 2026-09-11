@@ -1,4 +1,7 @@
+"use client";
+
 import {
+  ChevronRightIcon,
   CircleDotIcon,
   ExternalLinkIcon,
   GitBranchIcon,
@@ -10,6 +13,15 @@ import {
 import { GithubMark } from "@/components/devflow/github-mark";
 import { StatusDot } from "@/components/devflow/status-dot";
 import { DEPLOYMENT_PIPELINE, DEPLOYMENT_STATUS_META } from "@/lib/status";
+import { useEffect, useState } from "react";
+
+import {
+  CountUp,
+  GrowBar,
+  Stagger,
+  StaggerItem,
+  useHasBeenSeen,
+} from "@/components/marketing/motion";
 import { cn } from "@/lib/utils";
 
 function Frame({ children, className }: { children: React.ReactNode; className?: string }) {
@@ -53,32 +65,59 @@ export function GithubVisual() {
         </span>
       </div>
 
-      <div className="border-line mt-4 space-y-2 border-t pt-4">
+      {/* Commits arrive after the repository header, so the panel reads
+          repository first, then its activity. */}
+      <Stagger stagger={0.14} delay={0.3} className="border-line mt-4 space-y-2 border-t pt-4">
         {[
           { branch: "main", message: "feat: add lead scoring pipeline", time: "2h ago" },
           { branch: "fix/auth", message: "fix: refresh token rotation", time: "1d ago" },
-        ].map((commit) => (
-          <div key={commit.branch} className="flex items-center gap-2 text-xs">
+        ].map((commit, index) => (
+          <StaggerItem
+            key={commit.branch}
+            className="flex items-center gap-2 text-xs"
+            data-index={index}
+          >
             <GitBranchIcon className="text-text-tertiary size-3.5 shrink-0" aria-hidden="true" />
             <span className="text-text-secondary shrink-0 font-mono">{commit.branch}</span>
             <span className="text-text-tertiary truncate">{commit.message}</span>
             <span className="text-text-tertiary ml-auto shrink-0 font-mono text-[10px]">
               {commit.time}
             </span>
-          </div>
+          </StaggerItem>
         ))}
-      </div>
+      </Stagger>
     </Frame>
   );
 }
 
 export function DeploymentVisual() {
-  // The pipeline is mid-flight: the first two stages are done, testing is live.
-  const activeIndex = 2;
+  const { ref, seen } = useHasBeenSeen<HTMLDivElement>();
+
+  /**
+   * Walks the pipeline once, when the section is first reached.
+   *
+   * This is the section's argument made visible: a release moves through
+   * queue, build, test and deploy before it is live. It advances slowly enough
+   * to read, runs exactly once, and stops at production rather than looping —
+   * a pipeline that restarts forever would suggest a release that never lands.
+   */
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  useEffect(() => {
+    if (!seen) return;
+
+    const timers = DEPLOYMENT_PIPELINE.map((_, index) =>
+      setTimeout(() => setActiveIndex(index), index * 900),
+    );
+
+    return () => timers.forEach(clearTimeout);
+  }, [seen]);
+
+  const settled = activeIndex >= DEPLOYMENT_PIPELINE.length - 1;
 
   return (
     <Frame>
-      <div className="mb-4 flex items-center justify-between">
+      <div ref={ref} className="mb-4 flex items-center justify-between">
         <span className="font-mono text-sm font-medium">v1.4.2</span>
         <span className="text-text-tertiary font-mono text-xs">1m 48s</span>
       </div>
@@ -94,27 +133,30 @@ export function DeploymentVisual() {
             <li key={stage} className="flex gap-3">
               <div className="flex flex-col items-center">
                 <StatusDot
-                  tone={done ? "success" : active ? "warning" : "neutral"}
-                  pulsing={active}
+                  tone={done || (active && settled) ? "success" : active ? "warning" : "neutral"}
+                  pulsing={active && !settled}
                 />
                 {last ? null : (
                   <span
                     aria-hidden="true"
-                    className={cn("w-px flex-1", done ? "bg-status-success/40" : "bg-line")}
+                    className={cn(
+                      "w-px flex-1 transition-colors duration-500",
+                      done ? "bg-status-success/40" : "bg-line",
+                    )}
                   />
                 )}
               </div>
               <div className={cn("pb-4", last && "pb-0")}>
                 <p
                   className={cn(
-                    "text-xs font-medium",
+                    "text-xs font-medium transition-colors duration-500",
                     done || active ? "text-foreground" : "text-text-tertiary",
                   )}
                 >
                   {meta.label}
                 </p>
                 <p className="text-text-tertiary mt-0.5 font-mono text-[10px]">
-                  {done ? "completed" : active ? "in progress" : "pending"}
+                  {done ? "completed" : active ? (settled ? "live" : "in progress") : "pending"}
                 </p>
               </div>
             </li>
@@ -145,14 +187,22 @@ export function ApiVisual() {
           201
         </span>
       </div>
-      <div className="space-y-1 px-4 py-3 font-mono text-[11px] leading-relaxed">
+      {/*
+        Output arrives line by line, the way a real build log does. A plain
+        reveal would show a finished transcript; this shows work happening.
+      */}
+      <Stagger
+        stagger={0.16}
+        delay={0.2}
+        className="space-y-1 px-4 py-3 font-mono text-[11px] leading-relaxed"
+      >
         {LOG_LINES.map((line) => (
-          <div key={line.text} className="flex gap-2">
+          <StaggerItem key={line.text} className="flex gap-2">
             <span className="text-text-tertiary select-none">{line.prefix}</span>
             <span className={cn("truncate", line.tone)}>{line.text}</span>
-          </div>
+          </StaggerItem>
         ))}
-      </div>
+      </Stagger>
     </Frame>
   );
 }
@@ -165,22 +215,34 @@ export function AnalyticsVisual() {
       <div className="flex items-baseline justify-between">
         <div>
           <p className="text-text-secondary text-xs">API Requests</p>
-          <p className="mt-1 font-mono text-2xl font-semibold tabular-nums">1,248,392</p>
+          <p className="mt-1 font-mono text-2xl font-semibold tabular-nums">
+            <CountUp to={1248392} duration={1.8} />
+          </p>
         </div>
         <span className="text-status-success font-mono text-xs">+18.4%</span>
       </div>
 
+      {/*
+        Bars grow from the baseline, and the three accent bars are delayed a
+        beat behind the neutral ones so the recent rise reads as the point of
+        the chart rather than as colour applied at random.
+      */}
       <div className="mt-5 flex h-24 items-end gap-1" aria-hidden="true">
-        {SERIES.map((value, index) => (
-          <div
-            key={index}
-            className={cn(
-              "flex-1 rounded-sm transition-colors",
-              index >= SERIES.length - 3 ? "bg-brand-500" : "bg-surface-3",
-            )}
-            style={{ height: `${value}%` }}
-          />
-        ))}
+        {SERIES.map((value, index) => {
+          const highlighted = index >= SERIES.length - 3;
+
+          return (
+            <GrowBar
+              key={index}
+              heightPercent={value}
+              index={highlighted ? index + 4 : index}
+              className={cn(
+                "block flex-1 rounded-sm",
+                highlighted ? "bg-brand-500" : "bg-surface-3",
+              )}
+            />
+          );
+        })}
       </div>
 
       <div className="text-text-tertiary mt-3 flex justify-between font-mono text-[10px]">
@@ -204,18 +266,29 @@ export function TeamVisual() {
   return (
     <Frame className="p-0">
       <div className="divide-line divide-y">
+        {/*
+          Rows respond to the cursor so the panel reads as an interface rather
+          than a screenshot — the same hover the real member list has.
+        */}
         {members.map((member) => (
-          <div key={member.name} className="flex items-center gap-3 px-4 py-3">
-            <span className="bg-surface-3 text-text-secondary flex size-7 shrink-0 items-center justify-center rounded-full text-[10px] font-medium">
+          <div
+            key={member.name}
+            className="hover:bg-surface-2 group flex items-center gap-3 px-4 py-3 transition-colors duration-200"
+          >
+            <span className="bg-surface-3 text-text-secondary group-hover:bg-surface-3/80 flex size-7 shrink-0 items-center justify-center rounded-full text-[10px] font-medium transition-colors duration-200">
               {member.initials}
             </span>
             <span className="min-w-0 flex-1 truncate text-sm">{member.name}</span>
+            <ChevronRightIcon
+              className="text-text-tertiary size-3.5 shrink-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+              aria-hidden="true"
+            />
             <span
               className={cn(
-                "border-line shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-medium",
+                "shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-medium transition-colors duration-200",
                 member.role === "Owner"
-                  ? "text-brand-500 border-brand-500/30"
-                  : "text-text-tertiary",
+                  ? "text-brand-500 border-brand-500/30 group-hover:border-brand-500/60"
+                  : "border-line text-text-tertiary group-hover:text-text-secondary group-hover:border-line-strong",
               )}
             >
               {member.role}

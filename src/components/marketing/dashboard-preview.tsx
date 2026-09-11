@@ -11,6 +11,7 @@ import {
 import type { JSX } from "react";
 import { useState } from "react";
 
+import { GrowBar, Stagger, StaggerItem } from "@/components/marketing/motion";
 import { StatusDot } from "@/components/devflow/status-dot";
 import { cn } from "@/lib/utils";
 
@@ -52,9 +53,13 @@ function OverviewPanel() {
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+      {/*
+        The tiles land one after another, so the panel reads as an interface
+        populating rather than a picture fading in.
+      */}
+      <Stagger stagger={0.07} delay={0.25} className="grid grid-cols-2 gap-2 lg:grid-cols-4">
         {stats.map((stat) => (
-          <div
+          <StaggerItem
             key={stat.label}
             className={cn(
               "border-line bg-surface-2 rounded-md border p-2.5",
@@ -72,26 +77,30 @@ function OverviewPanel() {
             >
               {stat.value}
             </p>
-          </div>
+          </StaggerItem>
         ))}
-      </div>
+      </Stagger>
 
       <div className="border-line bg-surface-2 rounded-md border p-3">
         <div className="mb-3 flex items-center justify-between">
           <p className="text-text-secondary text-[11px] font-medium">API requests</p>
           <p className="text-text-tertiary font-mono text-[10px]">Last 12h</p>
         </div>
+        {/* Bars grow from the baseline; the accent bar arrives last so the
+            latest reading is what the eye finishes on. */}
         <div className="flex h-20 items-end gap-1" aria-hidden="true">
-          {TRAFFIC.map((value, index) => (
-            <div
-              key={index}
-              className={cn(
-                "flex-1 rounded-sm",
-                index === TRAFFIC.length - 1 ? "bg-brand-500" : "bg-surface-3",
-              )}
-              style={{ height: `${value}%` }}
-            />
-          ))}
+          {TRAFFIC.map((value, index) => {
+            const latest = index === TRAFFIC.length - 1;
+
+            return (
+              <GrowBar
+                key={index}
+                heightPercent={value}
+                index={latest ? index + 3 : index}
+                className={cn("block flex-1 rounded-sm", latest ? "bg-brand-500" : "bg-surface-3")}
+              />
+            );
+          })}
         </div>
       </div>
     </div>

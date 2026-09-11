@@ -1,7 +1,7 @@
 import { ArrowRightIcon } from "lucide-react";
 import Link from "next/link";
 
-import { FadeIn } from "@/components/devflow/fade-in";
+import { Reveal } from "@/components/marketing/motion";
 import { GithubMark } from "@/components/devflow/github-mark";
 import { FeatureGrid } from "@/components/marketing/feature-grid";
 import { Hero } from "@/components/marketing/hero";
@@ -133,23 +133,45 @@ export default function LandingPage() {
           <TechStack />
         </Section>
 
-        <Section className="text-center">
-          <FadeIn>
+        <Section className="relative overflow-hidden text-center">
+          {/* A single pool of accent light under the closing ask — the only
+              place on the page where the glow sits behind text. */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-0 top-1/2 h-72 -translate-y-1/2 opacity-[0.10] blur-3xl"
+            style={{
+              background:
+                "radial-gradient(45% 60% at 50% 50%, var(--color-brand-500) 0%, transparent 100%)",
+            }}
+          />
+          <Reveal className="relative">
             <h2 className="mx-auto max-w-2xl text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
               Bring your whole workflow into one place
             </h2>
-            <p className="text-text-secondary mx-auto mt-4 max-w-xl text-base text-pretty">
+            <p className="text-text-secondary mx-auto mt-5 max-w-xl text-base leading-relaxed text-pretty">
               Create a project, connect a repository and ship your first deployment in a few
               minutes.
             </p>
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-              <Button asChild size="lg">
+            <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
+              <Button
+                asChild
+                size="lg"
+                className="hover:shadow-brand-500/25 group transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl"
+              >
                 <Link href="/register">
                   Start Building
-                  <ArrowRightIcon aria-hidden="true" />
+                  <ArrowRightIcon
+                    aria-hidden="true"
+                    className="transition-transform duration-200 group-hover:translate-x-1"
+                  />
                 </Link>
               </Button>
-              <Button asChild variant="outline" size="lg">
+              <Button
+                asChild
+                variant="outline"
+                size="lg"
+                className="hover:border-line-strong hover:bg-surface-2 transition-all duration-200"
+              >
                 <a
                   href="https://github.com/shahzaibpanhwer-lgtm/devflow"
                   target="_blank"
@@ -160,7 +182,7 @@ export default function LandingPage() {
                 </a>
               </Button>
             </div>
-          </FadeIn>
+          </Reveal>
         </Section>
       </main>
 

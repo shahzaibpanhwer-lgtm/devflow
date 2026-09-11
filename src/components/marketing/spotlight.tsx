@@ -1,7 +1,7 @@
 import { CheckIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
-import { FadeIn } from "@/components/devflow/fade-in";
+import { Reveal, RevealVisual } from "@/components/marketing/motion";
 import { cn } from "@/lib/utils";
 
 type SpotlightProps = {
@@ -24,12 +24,16 @@ export function Spotlight({
 }: SpotlightProps) {
   return (
     <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
-      <FadeIn className={cn(reverse && "lg:order-2")}>
+      <Reveal className={cn(reverse && "lg:order-2")}>
         <p className="text-brand-500 font-mono text-xs font-medium tracking-[0.18em] uppercase">
           {eyebrow}
         </p>
-        <h3 className="mt-3 text-2xl font-semibold tracking-tight sm:text-3xl">{title}</h3>
-        <p className="text-text-secondary mt-4 text-base text-pretty">{description}</p>
+        <h3 className="mt-4 text-2xl font-semibold tracking-tight text-balance sm:text-3xl">
+          {title}
+        </h3>
+        <p className="text-text-secondary mt-4 text-base leading-relaxed text-pretty">
+          {description}
+        </p>
         <ul className="mt-6 space-y-2.5">
           {points.map((point) => (
             <li key={point} className="flex items-start gap-2.5 text-sm">
@@ -38,11 +42,11 @@ export function Spotlight({
             </li>
           ))}
         </ul>
-      </FadeIn>
+      </Reveal>
 
-      <FadeIn delay={0.08} className={cn("min-w-0", reverse && "lg:order-1")}>
+      <RevealVisual delay={0.12} className={cn("min-w-0", reverse && "lg:order-1")}>
         {visual}
-      </FadeIn>
+      </RevealVisual>
     </div>
   );
 }
