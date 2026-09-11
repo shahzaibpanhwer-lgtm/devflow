@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 
 import { GithubMark } from "@/components/devflow/github-mark";
 import { StatusBadge } from "@/components/devflow/status-badge";
-import { relativeTime } from "@/lib/activity";
+import { relativeTime } from "@/lib/time";
 import type { getProjectOverview, getRecentActivity, getRecentDeployments } from "@/lib/dashboard";
 import type { DeploymentStatus, ProjectStatus } from "@/lib/status";
 

@@ -11,7 +11,7 @@ import { GithubMark } from "@/components/devflow/github-mark";
 import { ConnectRepositoryDialog } from "@/components/github/connect-repository-dialog";
 import { DisconnectRepositoryButton } from "@/components/github/disconnect-repository-button";
 import { Button } from "@/components/ui/button";
-import { relativeTime } from "@/lib/activity";
+import { relativeTime } from "@/lib/time";
 import { describeGitHubError, GitHubError } from "@/lib/github/errors";
 import { getCommits, getIssues, getPullRequests } from "@/lib/github/repositories";
 

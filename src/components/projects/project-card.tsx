@@ -4,7 +4,7 @@ import Link from "next/link";
 
 import { GithubMark } from "@/components/devflow/github-mark";
 import { StatusBadge } from "@/components/devflow/status-badge";
-import { relativeTime } from "@/lib/activity";
+import { relativeTime } from "@/lib/time";
 import type { ProjectSummary } from "@/lib/projects";
 import type { ProjectStatus } from "@/lib/status";
 
