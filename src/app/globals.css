@@ -93,6 +93,9 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+  --color-chart-status-success: var(--chart-status-success);
+  --color-chart-status-warning: var(--chart-status-warning);
+  --color-chart-status-danger: var(--chart-status-danger);
 
   /* Radii — restrained, never pill-shaped cards */
   --radius-sm: calc(var(--radius) - 2px);
@@ -175,6 +178,14 @@
   --chart-3: #199e70;
   --chart-4: #c98500;
   --chart-5: #d55181;
+
+  /* Status steps for charts. The application's status tokens are tuned for
+     text and badges and fall outside the dark-chart lightness band, so charts
+     use these darker steps instead. Validated against #101316: band, chroma,
+     colour-vision separation, normal-vision floor and contrast all pass. */
+  --chart-status-success: #199e70;
+  --chart-status-warning: #c98500;
+  --chart-status-danger: #d14343;
 }
 
 /* DevFlow ships dark-only; `.dark` mirrors root so shadcn's variant is a no-op
