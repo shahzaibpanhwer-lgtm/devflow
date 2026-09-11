@@ -1,25 +1,25 @@
-import { TerminalIcon } from "lucide-react";
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 
-import { EmptyState } from "@/components/devflow/empty-state";
 import { PageHeader } from "@/components/devflow/page-header";
+import { Playground } from "@/components/playground/playground";
+import { getCurrentUser } from "@/lib/current-user";
 
 export const metadata: Metadata = {
   title: "API Playground",
 };
 
-export default function ApiPlaygroundPage() {
+export default async function ApiPlaygroundPage() {
+  const user = await getCurrentUser();
+  if (!user) redirect("/login");
+
   return (
     <div>
       <PageHeader
         title="API Playground"
-        description="Compose and send requests against the DevFlow API, then inspect the full response."
+        description="Send real requests to DevFlow's API as your signed-in account, and read the response exactly as a client would."
       />
-      <EmptyState
-        icon={TerminalIcon}
-        title="Playground not configured"
-        description="The request editor, collections and response inspector arrive with the API phase."
-      />
+      <Playground />
     </div>
   );
 }
