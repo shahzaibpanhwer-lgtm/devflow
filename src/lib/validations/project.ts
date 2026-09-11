@@ -78,6 +78,8 @@ export const createProjectSchema = z.object({
   productionUrl: optionalUrl,
   repositoryUrl: optionalUrl,
   githubRepository,
+  /** Publishes the project at /p/[slug]. Opt-in, never implied. */
+  isPublic: z.boolean().optional(),
 });
 
 /**

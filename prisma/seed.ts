@@ -303,6 +303,8 @@ async function main() {
         framework: spec.framework,
         status: spec.status,
         productionUrl: spec.productionUrl,
+        // Shipped projects get a public page; work in progress does not.
+        isPublic: spec.status === ProjectStatus.PRODUCTION,
         repositoryUrl: `https://github.com/${spec.githubRepository}`,
         githubRepository: spec.githubRepository,
         ownerId: owner.id,

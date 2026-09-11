@@ -99,6 +99,7 @@ export async function POST(request: Request) {
         productionUrl: input.productionUrl ?? null,
         repositoryUrl: input.repositoryUrl ?? null,
         githubRepository: input.githubRepository ?? null,
+        isPublic: input.isPublic ?? false,
         ownerId: user.id,
         teamId: membership?.teamId ?? null,
       },

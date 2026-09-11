@@ -252,6 +252,17 @@ export default async function ProjectDetailPage({ params }: PageProps) {
                 {project.githubRepository}
               </a>
             ) : null}
+            {project.isPublic ? (
+              <a
+                href={`/p/${project.slug}`}
+                target="_blank"
+                rel="noreferrer"
+                className="text-brand-500 inline-flex items-center gap-1.5 font-mono text-xs transition-opacity hover:opacity-80"
+              >
+                /p/{project.slug}
+                <ExternalLinkIcon className="size-3" aria-hidden="true" />
+              </a>
+            ) : null}
             {project.productionUrl ? (
               <a
                 href={project.productionUrl}
@@ -278,6 +289,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
                 productionUrl: project.productionUrl ?? "",
                 repositoryUrl: project.repositoryUrl ?? "",
                 githubRepository: project.githubRepository ?? "",
+                isPublic: project.isPublic,
               }}
               trigger={
                 <Button variant="outline" size="sm">

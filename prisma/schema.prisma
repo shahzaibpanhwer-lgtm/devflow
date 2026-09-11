@@ -196,6 +196,13 @@ model Project {
   /// Convenience "owner/name" handle used when calling the GitHub API.
   githubRepository String?
 
+  /// Whether /p/[slug] serves this project to anyone.
+  ///
+  /// Defaults to false: a slug is guessable, so publishing has to be a
+  /// deliberate act rather than something that happens because a project was
+  /// created.
+  isPublic Boolean @default(false)
+
   ownerId String
   teamId  String?
 

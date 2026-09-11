@@ -23,6 +23,7 @@ const projectSelect = {
   productionUrl: true,
   repositoryUrl: true,
   githubRepository: true,
+  isPublic: true,
   createdAt: true,
   updatedAt: true,
   ownerId: true,
@@ -138,10 +139,17 @@ export async function getProjectDetail(projectId: string) {
 
 export type ProjectDetail = NonNullable<Awaited<ReturnType<typeof getProjectDetail>>>;
 
-/** Public projection for /p/[slug]; deliberately omits owner and team data. */
+/**
+ * Public projection for /p/[slug].
+ *
+ * Filters on isPublic in the query rather than fetching and checking after,
+ * so an unpublished project is indistinguishable from one that does not
+ * exist — the page cannot be used to confirm a private project's slug.
+ * Owner and team data are deliberately not selected.
+ */
 export async function getPublicProject(slug: string) {
-  return db.project.findUnique({
-    where: { slug },
+  return db.project.findFirst({
+    where: { slug, isPublic: true },
     select: {
       id: true,
       name: true,
@@ -159,6 +167,29 @@ export async function getPublicProject(slug: string) {
       _count: { select: { deployments: true } },
     },
   });
+}
+
+/**
+ * Aggregate figures for the public page.
+ *
+ * Counted over the project's whole history rather than a rolling window: a
+ * portfolio page is showing what was built, not how busy last month was.
+ */
+export async function getPublicProjectStats(projectId: string) {
+  const [deployments, succeeded, failed, apiRequests] = await Promise.all([
+    db.deployment.count({ where: { projectId } }),
+    db.deployment.count({ where: { projectId, status: "SUCCESS" } }),
+    db.deployment.count({ where: { projectId, status: "FAILED" } }),
+    db.apiRequest.count({ where: { projectId } }),
+  ]);
+
+  const finished = succeeded + failed;
+
+  return {
+    deployments,
+    apiRequests,
+    successRate: finished === 0 ? null : (succeeded / finished) * 100,
+  };
 }
 
 export async function slugExists(slug: string): Promise<boolean> {
