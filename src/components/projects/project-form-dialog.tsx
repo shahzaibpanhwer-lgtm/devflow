@@ -24,6 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import type { ApiResult } from "@/lib/api-response";
 import { PROJECT_STATUSES, PROJECT_STATUS_META, type ProjectStatus } from "@/lib/status";
@@ -38,6 +39,7 @@ type ProjectValues = {
   productionUrl: string;
   repositoryUrl: string;
   githubRepository: string;
+  isPublic: boolean;
 };
 
 const EMPTY: ProjectValues = {
@@ -48,6 +50,7 @@ const EMPTY: ProjectValues = {
   productionUrl: "",
   repositoryUrl: "",
   githubRepository: "",
+  isPublic: false,
 };
 
 type FieldErrors = Partial<Record<keyof ProjectValues, string>>;
@@ -65,6 +68,7 @@ export function ProjectFormDialog({ trigger, project }: ProjectFormDialogProps) 
   const [open, setOpen] = useState(false);
   const [pending, setPending] = useState(false);
   const [status, setStatus] = useState<ProjectStatus>(project?.status ?? "DEVELOPMENT");
+  const [isPublic, setIsPublic] = useState(project?.isPublic ?? false);
   const [formError, setFormError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
@@ -74,6 +78,7 @@ export function ProjectFormDialog({ trigger, project }: ProjectFormDialogProps) 
     setFormError(null);
     setFieldErrors({});
     setStatus(project?.status ?? "DEVELOPMENT");
+    setIsPublic(project?.isPublic ?? false);
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -90,6 +95,7 @@ export function ProjectFormDialog({ trigger, project }: ProjectFormDialogProps) 
       productionUrl: String(form.get("productionUrl") ?? ""),
       repositoryUrl: String(form.get("repositoryUrl") ?? ""),
       githubRepository: String(form.get("githubRepository") ?? ""),
+      isPublic,
     };
 
     const parsed = createProjectSchema.safeParse(values);
@@ -264,6 +270,23 @@ export function ProjectFormDialog({ trigger, project }: ProjectFormDialogProps) 
                 {fieldErrors.productionUrl}
               </p>
             ) : null}
+          </div>
+
+          <div className="border-line flex items-start justify-between gap-4 rounded-md border p-3">
+            <div className="min-w-0">
+              <Label htmlFor="project-public" className="text-sm">
+                Public project page
+              </Label>
+              <p className="text-text-tertiary mt-0.5 text-xs text-pretty">
+                Publishes a read-only page at /p/{"{slug}"} that anyone can open. Off by default.
+              </p>
+            </div>
+            <Switch
+              id="project-public"
+              checked={isPublic}
+              onCheckedChange={setIsPublic}
+              aria-label="Publish a public project page"
+            />
           </div>
 
           <DialogFooter>
