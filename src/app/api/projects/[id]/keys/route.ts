@@ -5,7 +5,11 @@ import { badRequest, created, fail, ok, serverError, validationFailed } from "@/
 import { AuthError, PROJECT_PERMISSIONS, requireProjectAccess, requireUser } from "@/lib/authz";
 import { generateKey, listProjectKeys } from "@/lib/api-keys";
 import { db } from "@/lib/db";
+import { clientIdentifier, rateLimit } from "@/lib/rate-limit";
 import { createApiKeySchema } from "@/lib/validations/api-key";
+
+/** Issuing credentials is sensitive enough to cap, as registration is. */
+const RATE_LIMIT = { limit: 10, windowMs: 60 * 60 * 1000 };
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -31,6 +35,13 @@ export async function POST(request: Request, { params }: RouteContext) {
 
     // Issuing credentials is an admin action, not a developer one.
     const access = await requireProjectAccess(id, user.id, PROJECT_PERMISSIONS.manageKeys);
+
+    const limit = rateLimit(`api-key:${clientIdentifier(request)}`, RATE_LIMIT);
+    if (!limit.allowed) {
+      return fail(`Too many keys created. Try again in ${limit.retryAfter} seconds.`, 429, {
+        code: "RATE_LIMITED",
+      });
+    }
 
     let payload: unknown;
     try {

@@ -1,6 +1,10 @@
 import { TeamRole } from "@prisma/client";
 
 import { auth } from "@/lib/auth";
+import { AuthError, PROJECT_PERMISSIONS, roleAtLeast } from "@/lib/roles";
+
+// Re-exported so existing importers are unaffected by the split.
+export { AuthError, PROJECT_PERMISSIONS, roleAtLeast };
 import { db } from "@/lib/db";
 
 /**
@@ -11,28 +15,6 @@ import { db } from "@/lib/db";
  * hold a role permitting the action — the UI hiding a button is a courtesy,
  * never the boundary.
  */
-
-/** Ascending privilege. A role satisfies any requirement at or below its rank. */
-const ROLE_RANK: Record<TeamRole, number> = {
-  VIEWER: 0,
-  DEVELOPER: 1,
-  ADMIN: 2,
-  OWNER: 3,
-};
-
-export function roleAtLeast(role: TeamRole, required: TeamRole): boolean {
-  return ROLE_RANK[role] >= ROLE_RANK[required];
-}
-
-export class AuthError extends Error {
-  constructor(
-    message: string,
-    readonly status: 401 | 403 | 404,
-  ) {
-    super(message);
-    this.name = "AuthError";
-  }
-}
 
 export type SessionUser = {
   id: string;
@@ -132,12 +114,3 @@ export async function requireProjectAccess(
 
   return access;
 }
-
-/** Minimum role required for each project action. */
-export const PROJECT_PERMISSIONS = {
-  view: TeamRole.VIEWER,
-  update: TeamRole.DEVELOPER,
-  deploy: TeamRole.DEVELOPER,
-  delete: TeamRole.ADMIN,
-  manageKeys: TeamRole.ADMIN,
-} as const satisfies Record<string, TeamRole>;
