@@ -28,7 +28,7 @@ export default function LandingPage() {
       <main className="flex-1">
         <Hero />
 
-        <Section id="features">
+        <Section id="features" backdrop="neutral">
           <SectionHeading
             eyebrow="Features"
             title="Everything a project needs, in one workspace"
@@ -37,7 +37,7 @@ export default function LandingPage() {
           <FeatureGrid />
         </Section>
 
-        <Section id="github">
+        <Section id="github" backdrop="network">
           <Spotlight
             eyebrow="GitHub integration"
             title="Your repository, in context"
@@ -51,7 +51,7 @@ export default function LandingPage() {
           />
         </Section>
 
-        <Section id="deployments">
+        <Section id="deployments" backdrop="pipeline">
           <Spotlight
             reverse
             eyebrow="Deployments"
@@ -66,7 +66,7 @@ export default function LandingPage() {
           />
         </Section>
 
-        <Section id="api">
+        <Section id="api" backdrop="neutral">
           <Spotlight
             eyebrow="API playground"
             title="Test your endpoints without leaving the tab"
@@ -80,7 +80,7 @@ export default function LandingPage() {
           />
         </Section>
 
-        <Section id="analytics">
+        <Section id="analytics" backdrop="data">
           <Spotlight
             reverse
             eyebrow="Analytics"
@@ -95,7 +95,7 @@ export default function LandingPage() {
           />
         </Section>
 
-        <Section id="team">
+        <Section id="team" backdrop="neutral">
           <Spotlight
             eyebrow="Team collaboration"
             title="Roles enforced where it counts"
@@ -109,7 +109,7 @@ export default function LandingPage() {
           />
         </Section>
 
-        <Section id="public-pages">
+        <Section id="public-pages" backdrop="neutral">
           <Spotlight
             reverse
             eyebrow="Public project pages"
@@ -124,7 +124,7 @@ export default function LandingPage() {
           />
         </Section>
 
-        <Section id="stack">
+        <Section id="stack" backdrop="rules">
           <SectionHeading
             eyebrow="Stack"
             title="Built on tools worth defending in review"
@@ -133,17 +133,7 @@ export default function LandingPage() {
           <TechStack />
         </Section>
 
-        <Section className="relative overflow-hidden text-center">
-          {/* A single pool of accent light under the closing ask — the only
-              place on the page where the glow sits behind text. */}
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-x-0 top-1/2 h-72 -translate-y-1/2 opacity-[0.10] blur-3xl"
-            style={{
-              background:
-                "radial-gradient(45% 60% at 50% 50%, var(--color-brand-500) 0%, transparent 100%)",
-            }}
-          />
+        <Section backdrop="cta" className="overflow-hidden text-center">
           <Reveal className="relative">
             <h2 className="mx-auto max-w-2xl text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
               Bring your whole workflow into one place

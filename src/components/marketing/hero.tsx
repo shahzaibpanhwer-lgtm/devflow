@@ -1,6 +1,7 @@
 import { ArrowRightIcon } from "lucide-react";
 import Link from "next/link";
 
+import { SectionBackdrop } from "@/components/marketing/backdrop";
 import { DashboardPreview } from "@/components/marketing/dashboard-preview";
 import { Reveal, RevealVisual } from "@/components/marketing/motion";
 import { Button } from "@/components/ui/button";
@@ -8,31 +9,7 @@ import { Button } from "@/components/ui/button";
 export function Hero() {
   return (
     <section className="relative overflow-hidden">
-      {/* Technical grid, masked to fade out well before the edges. Present
-          enough to give the section a floor, faint enough that it reads as
-          texture rather than as a drawn table. */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0"
-        style={{
-          backgroundImage:
-            "linear-gradient(to right, #ffffff08 1px, transparent 1px), linear-gradient(to bottom, #ffffff08 1px, transparent 1px)",
-          backgroundSize: "64px 64px",
-          maskImage: "radial-gradient(ellipse 70% 50% at 50% 30%, black 10%, transparent 70%)",
-          WebkitMaskImage:
-            "radial-gradient(ellipse 70% 50% at 50% 30%, black 10%, transparent 70%)",
-        }}
-      />
-
-      {/* A single soft ellipse of accent light — not a gradient field. */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 -top-40 h-96 opacity-[0.09] blur-3xl"
-        style={{
-          background:
-            "radial-gradient(50% 60% at 50% 50%, var(--color-brand-500) 0%, transparent 100%)",
-        }}
-      />
+      <SectionBackdrop variant="hero" />
 
       <div className="relative mx-auto w-full max-w-6xl px-6 pt-16 pb-16 sm:pt-24 sm:pb-24">
         <Reveal className="mx-auto max-w-3xl text-center">
