@@ -57,3 +57,9 @@ next-env.d.ts
 # Next.js auto-generated agent instructions
 AGENTS.md
 CLAUDE.md
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
