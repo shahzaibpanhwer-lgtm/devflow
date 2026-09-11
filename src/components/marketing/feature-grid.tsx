@@ -9,7 +9,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-import { FadeIn } from "@/components/devflow/fade-in";
+import { Stagger, StaggerItem } from "@/components/marketing/motion";
 import { GithubMark } from "@/components/devflow/github-mark";
 
 type Feature = {
@@ -71,16 +71,30 @@ const FEATURES: readonly Feature[] = [
 
 export function FeatureGrid() {
   return (
-    <div className="border-line bg-line mt-14 grid gap-px overflow-hidden rounded-lg border sm:grid-cols-2 lg:grid-cols-4">
-      {FEATURES.map((feature, index) => (
-        <FadeIn key={feature.title} delay={index * 0.04} className="bg-surface-1">
-          <div className="hover:bg-surface-2 h-full p-5 transition-colors">
-            <feature.icon className="text-brand-500 size-4" aria-hidden="true" />
+    <Stagger
+      stagger={0.05}
+      className="border-line bg-line mt-14 grid gap-px overflow-hidden rounded-lg border sm:grid-cols-2 lg:grid-cols-4"
+    >
+      {FEATURES.map((feature) => (
+        <StaggerItem key={feature.title} className="bg-surface-1 group relative">
+          {/*
+            The lift is on an inner element so the grid's hairline gaps stay
+            put — translating the cell itself would open a seam between cards.
+          */}
+          <div className="hover:bg-surface-2 relative h-full p-5 transition-colors duration-200 group-hover:-translate-y-0.5">
+            <span
+              aria-hidden="true"
+              className="ring-brand-500/20 pointer-events-none absolute inset-0 opacity-0 ring-1 transition-opacity duration-200 ring-inset group-hover:opacity-100"
+            />
+            <feature.icon
+              className="text-brand-500 size-4 transition-transform duration-200 group-hover:scale-110"
+              aria-hidden="true"
+            />
             <h3 className="mt-3 text-sm font-medium">{feature.title}</h3>
             <p className="text-text-secondary mt-1.5 text-sm text-pretty">{feature.description}</p>
           </div>
-        </FadeIn>
+        </StaggerItem>
       ))}
-    </div>
+    </Stagger>
   );
 }
