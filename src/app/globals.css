@@ -87,6 +87,7 @@
   --color-status-neutral: var(--status-neutral);
 
   /* Charts */
+  --color-chart-brand: var(--chart-brand);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
@@ -161,12 +162,19 @@
   --sidebar-border: var(--line);
   --sidebar-ring: #ff6319;
 
-  /* Chart ramp — accent leads, neutrals support */
-  --chart-1: #ff6319;
-  --chart-2: #3b9eff;
-  --chart-3: #2fbf71;
-  --chart-4: #f5a524;
-  --chart-5: #8d959b;
+  /* Chart ramp.
+     A single-series chart uses --chart-brand, which carries the product's
+     accent. Multi-series charts use slots 1-5 in this fixed order: the order
+     itself is the colour-vision-deficiency safety mechanism, so it is never
+     re-ordered or cycled. Validated against the #101316 chart surface —
+     lightness band, chroma floor, CVD separation, normal-vision floor and
+     contrast all pass. */
+  --chart-brand: #ff6319;
+  --chart-1: #3987e5;
+  --chart-2: #d95926;
+  --chart-3: #199e70;
+  --chart-4: #c98500;
+  --chart-5: #d55181;
 }
 
 /* DevFlow ships dark-only; `.dark` mirrors root so shadcn's variant is a no-op
