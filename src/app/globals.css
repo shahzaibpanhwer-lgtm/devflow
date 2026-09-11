@@ -97,6 +97,12 @@
   --color-chart-status-warning: var(--chart-status-warning);
   --color-chart-status-danger: var(--chart-status-danger);
 
+  /* Background atmosphere. Deliberately slow: the reader should register the
+     depth before they notice anything is moving. */
+  --animate-node-pulse: node-pulse 6s ease-in-out infinite;
+  --animate-travel: travel var(--travel-duration, 14s) linear infinite;
+  --animate-ambient: ambient 24s ease-in-out infinite;
+
   /* Motion used by the sign-in visual. Registered here so Tailwind v4 emits
      the utilities; the global prefers-reduced-motion guard at the bottom of
      this file stops them for anyone who has asked for less movement. */
@@ -316,5 +322,57 @@
   }
   50% {
     transform: translate3d(0, -2%, 0) scale(1.06);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Background atmosphere
+   --------------------------------------------------------------------------- */
+
+/* A node breathing. Opacity only, so it costs nothing to composite. */
+@keyframes node-pulse {
+  0%,
+  100% {
+    opacity: var(--node-opacity, 0.5);
+  }
+  50% {
+    opacity: calc(var(--node-opacity, 0.5) * 2.2);
+  }
+}
+
+/*
+   Carries a point from one node to the next.
+
+   One keyframe serves every connection: each dot supplies its own --dx/--dy,
+   so a graph of any size needs no per-connection CSS. Transform and opacity
+   only, so the browser composites rather than repainting the SVG.
+*/
+@keyframes travel {
+  0% {
+    transform: translate(0, 0);
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  88% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--dx), var(--dy));
+    opacity: 0;
+  }
+}
+
+/* Ambient light drifting just enough that it does not read as a static blob. */
+@keyframes ambient {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: var(--ambient-opacity, 0.08);
+  }
+  50% {
+    transform: translate3d(2%, -3%, 0) scale(1.08);
+    opacity: calc(var(--ambient-opacity, 0.08) * 1.35);
   }
 }
