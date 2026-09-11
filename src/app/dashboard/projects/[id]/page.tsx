@@ -20,11 +20,14 @@ import { DeleteProjectDialog } from "@/components/projects/delete-project-dialog
 import { ProjectFormDialog } from "@/components/projects/project-form-dialog";
 import { ProjectTabs } from "@/components/projects/project-tabs";
 import { Button } from "@/components/ui/button";
-import { relativeTime } from "@/lib/activity";
+import { relativeTime } from "@/lib/time";
 import { getProjectAccess, PROJECT_PERMISSIONS, roleAtLeast } from "@/lib/authz";
 import { getCurrentUser } from "@/lib/current-user";
+import { CreateDeploymentDialog } from "@/components/deployments/create-deployment-dialog";
+import { DeploymentList } from "@/components/deployments/deployment-list";
 import { hasGithubConnection } from "@/lib/github/client";
 import { RepositoryPanel } from "@/components/github/repository-panel";
+import { listDeployments } from "@/lib/deployments";
 import { getProjectDetail, type ProjectDetail } from "@/lib/projects";
 import type { DeploymentStatus, ProjectStatus } from "@/lib/status";
 
@@ -208,9 +211,10 @@ export default async function ProjectDetailPage({ params }: PageProps) {
   const access = await getProjectAccess(id, user.id);
   if (!access) notFound();
 
-  const [project, githubConnected] = await Promise.all([
+  const [project, githubConnected, deploymentPage] = await Promise.all([
     getProjectDetail(id),
     hasGithubConnection(user.id),
+    listDeployments(user.id, { projectId: id, page: 1, perPage: 20 }),
   ]);
   if (!project) notFound();
 
@@ -326,11 +330,26 @@ export default async function ProjectDetailPage({ params }: PageProps) {
             </div>
           ),
           deployments: (
-            <EmptyState
-              icon={RocketIcon}
-              title="Deployment management arrives next"
-              description="The full deployment timeline, build logs and the ability to trigger a release are built in the deployments phase. Recent deployments already appear on the Overview tab."
-            />
+            <div className="space-y-4">
+              {canEdit ? (
+                <div className="flex justify-end">
+                  <CreateDeploymentDialog
+                    projects={[{ id: project.id, name: project.name }]}
+                    defaultProjectId={project.id}
+                    trigger={
+                      <Button size="sm">
+                        <RocketIcon aria-hidden="true" />
+                        Deploy
+                      </Button>
+                    }
+                  />
+                </div>
+              ) : null}
+              <DeploymentList
+                deployments={deploymentPage.deployments}
+                emptyDescription="Start a deployment to see its pipeline, build output and result here."
+              />
+            </div>
           ),
           analytics: (
             <EmptyState

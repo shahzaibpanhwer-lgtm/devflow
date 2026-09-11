@@ -134,7 +134,7 @@ metrics that genuinely demand attention.
 - [x] **Phase 5** — Project CRUD
 - [x] **Phase 6** — Dashboard
 - [x] **Phase 7** — GitHub integration
-- [ ] **Phase 8** — Deployments
+- [x] **Phase 8** — Deployments
 - [ ] **Phase 9** — Analytics
 - [ ] **Phase 10** — API playground
 - [ ] **Phase 11** — API keys and documentation
