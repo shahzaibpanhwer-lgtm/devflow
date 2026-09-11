@@ -1,25 +1,21 @@
-import { BookTextIcon } from "lucide-react";
 import type { Metadata } from "next";
+import { notFound, redirect } from "next/navigation";
 
-import { EmptyState } from "@/components/devflow/empty-state";
-import { PageHeader } from "@/components/devflow/page-header";
+import { DocsShell } from "@/components/docs/docs-shell";
+import { getCurrentUser } from "@/lib/current-user";
+import { findSection } from "@/lib/docs";
 
 export const metadata: Metadata = {
   title: "Documentation",
 };
 
-export default function DocumentationPage() {
-  return (
-    <div>
-      <PageHeader
-        title="Documentation"
-        description="Reference for the DevFlow API — endpoints, parameters, responses and code samples."
-      />
-      <EmptyState
-        icon={BookTextIcon}
-        title="Documentation is being written"
-        description="Endpoint reference, authentication guides and multi-language code samples land in the documentation phase."
-      />
-    </div>
-  );
+/** /dashboard/docs opens on the introduction rather than redirecting. */
+export default async function DocsPage() {
+  const user = await getCurrentUser();
+  if (!user) redirect("/login");
+
+  const section = findSection("introduction");
+  if (!section) notFound();
+
+  return <DocsShell section={section} />;
 }

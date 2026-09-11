@@ -23,10 +23,12 @@ import { Button } from "@/components/ui/button";
 import { relativeTime } from "@/lib/time";
 import { getProjectAccess, PROJECT_PERMISSIONS, roleAtLeast } from "@/lib/authz";
 import { getCurrentUser } from "@/lib/current-user";
+import { ApiKeysPanel } from "@/components/api-keys/api-keys-panel";
 import { CreateDeploymentDialog } from "@/components/deployments/create-deployment-dialog";
 import { DeploymentList } from "@/components/deployments/deployment-list";
 import { hasGithubConnection } from "@/lib/github/client";
 import { RepositoryPanel } from "@/components/github/repository-panel";
+import { listProjectKeys } from "@/lib/api-keys";
 import { listDeployments } from "@/lib/deployments";
 import { getProjectDetail, type ProjectDetail } from "@/lib/projects";
 import type { DeploymentStatus, ProjectStatus } from "@/lib/status";
@@ -211,15 +213,17 @@ export default async function ProjectDetailPage({ params }: PageProps) {
   const access = await getProjectAccess(id, user.id);
   if (!access) notFound();
 
-  const [project, githubConnected, deploymentPage] = await Promise.all([
+  const [project, githubConnected, deploymentPage, apiKeys] = await Promise.all([
     getProjectDetail(id),
     hasGithubConnection(user.id),
     listDeployments(user.id, { projectId: id, page: 1, perPage: 20 }),
+    listProjectKeys(id),
   ]);
   if (!project) notFound();
 
   const canEdit = roleAtLeast(access.effectiveRole, PROJECT_PERMISSIONS.update);
   const canDelete = roleAtLeast(access.effectiveRole, PROJECT_PERMISSIONS.delete);
+  const canManageKeys = roleAtLeast(access.effectiveRole, PROJECT_PERMISSIONS.manageKeys);
 
   return (
     <div>
@@ -358,11 +362,27 @@ export default async function ProjectDetailPage({ params }: PageProps) {
               description="Request volume, latency and error rates for this project arrive in the analytics phase."
             />
           ),
-          api: (
+          api: canManageKeys ? (
+            <ApiKeysPanel
+              projectId={project.id}
+              canManage={canManageKeys}
+              keys={apiKeys.map((key) => ({
+                id: key.id,
+                name: key.name,
+                prefix: key.prefix,
+                lastFour: key.lastFour,
+                lastUsedAt: key.lastUsedAt?.toISOString() ?? null,
+                revokedAt: key.revokedAt?.toISOString() ?? null,
+                expiresAt: key.expiresAt?.toISOString() ?? null,
+                createdAt: key.createdAt.toISOString(),
+                createdBy: key.user.name ?? key.user.email,
+              }))}
+            />
+          ) : (
             <EmptyState
               icon={TerminalIcon}
-              title="API keys not built yet"
-              description="Issuing and revoking keys scoped to this project arrives in the API keys phase."
+              title="API keys are restricted"
+              description="Only project admins and owners can view or issue API keys."
             />
           ),
           team: (
