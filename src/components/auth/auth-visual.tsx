@@ -17,134 +17,145 @@ import { LogoMark } from "@/components/devflow/logo";
  * would say nothing about this product and would pull images from an outside
  * CDN on the first page a visitor sees.
  *
- * Opacities here are deliberately higher than they look on paper: the ground
- * is #0b0d0f, so a white hairline at 5% resolves to about #181a1b and is
- * effectively invisible. Everything is tuned against that surface rather than
- * against a mid-grey.
+ * The orbital system is a fixed-size stage containing nothing but the rings,
+ * the marks and the logo at their centre. Copy sits *below* that stage rather
+ * than inside it: an orbit is a circle drawn through the centre of its
+ * container, so anything placed there is on the path by definition and will be
+ * crossed by every mark that passes.
  *
- * All motion is CSS. The global prefers-reduced-motion rule in globals.css
- * stops it for anyone who has asked for less movement, and the composition is
- * identical when it does.
+ * Opacities are tuned against #0b0d0f, not a mid-grey — a white hairline at 5%
+ * resolves to about #181a1b on this ground and is effectively invisible.
+ *
+ * All motion is CSS, and the global prefers-reduced-motion rule in globals.css
+ * stops it for anyone who has asked for less movement.
  */
 
-/** Rings, outermost first. Inner rings carry the accent; outer ones recede. */
+/** Stage size in pixels. Every ring and orbit has to fit inside this. */
+const STAGE = 400;
+
+/** Rings, outermost first. The inner pair carries the accent. */
 const RINGS = [
-  { size: 520, className: "border-foreground/[0.07]", dashed: true, opacity: 0.07 },
-  { size: 400, className: "border-foreground/10", dashed: false, opacity: 0.1 },
-  { size: 280, className: "border-brand-500/25", dashed: false, opacity: 0.25 },
-  { size: 160, className: "border-brand-500/40", dashed: false, opacity: 0.4 },
+  { size: 400, className: "border-foreground/[0.08]", dashed: true, opacity: 0.08 },
+  { size: 300, className: "border-foreground/[0.12]", dashed: false, opacity: 0.12 },
+  { size: 200, className: "border-brand-500/30", dashed: false, opacity: 0.3 },
+  { size: 100, className: "border-brand-500/45", dashed: false, opacity: 0.45 },
 ];
 
 /**
- * Marks travelling the rings. Durations are unequal and slow, so the
+ * Marks travelling the rings, one ring in from the ring they track so they sit
+ * on the line rather than outside it. Durations are unequal and slow, so the
  * arrangement never settles into a pattern the eye can lock on to.
  */
 const ORBITERS = [
-  { icon: FolderGitIcon, radius: 80, duration: 26, delay: 0, reverse: false, accent: true },
-  { icon: RocketIcon, radius: 80, duration: 26, delay: -13, reverse: false, accent: false },
-  { icon: TerminalIcon, radius: 140, duration: 34, delay: -4, reverse: true, accent: false },
+  { icon: FolderGitIcon, radius: 100, duration: 28, delay: 0, reverse: false, accent: true },
+  { icon: RocketIcon, radius: 100, duration: 28, delay: -14, reverse: false, accent: false },
+  { icon: TerminalIcon, radius: 150, duration: 36, delay: -5, reverse: true, accent: false },
   {
     icon: ChartNoAxesColumnIcon,
-    radius: 140,
-    duration: 34,
-    delay: -21,
+    radius: 150,
+    duration: 36,
+    delay: -23,
     reverse: true,
     accent: true,
   },
-  { icon: UsersIcon, radius: 200, duration: 42, delay: -8, reverse: false, accent: false },
-  { icon: KeyRoundIcon, radius: 200, duration: 42, delay: -29, reverse: false, accent: false },
+  { icon: UsersIcon, radius: 200, duration: 46, delay: -9, reverse: false, accent: false },
+  { icon: KeyRoundIcon, radius: 200, duration: 46, delay: -32, reverse: false, accent: false },
 ];
 
 export function AuthVisual() {
   return (
     <section
       aria-hidden="true"
-      className="border-line bg-surface-0 relative hidden overflow-hidden border-r lg:flex lg:items-center lg:justify-center"
+      className="border-line bg-surface-0 relative hidden overflow-hidden border-r lg:flex lg:flex-col lg:items-center lg:justify-center"
     >
-      {/* Fine grid, faded out towards the edges so it reads as texture rather
-          than as a drawn table. */}
+      {/* Fine grid, faded towards the edges so it reads as texture rather than
+          as a drawn table. */}
       <span
-        className="absolute inset-0 opacity-[0.6]"
+        className="absolute inset-0"
         style={{
           backgroundImage:
             "linear-gradient(to right, #ffffff0a 1px, transparent 1px), linear-gradient(to bottom, #ffffff0a 1px, transparent 1px)",
           backgroundSize: "48px 48px",
-          maskImage: "radial-gradient(ellipse 70% 60% at 50% 50%, black 20%, transparent 75%)",
+          maskImage: "radial-gradient(ellipse 65% 55% at 50% 45%, black 10%, transparent 70%)",
           WebkitMaskImage:
-            "radial-gradient(ellipse 70% 60% at 50% 50%, black 20%, transparent 75%)",
+            "radial-gradient(ellipse 65% 55% at 50% 45%, black 10%, transparent 70%)",
         }}
       />
 
-      {/* Two stacked glows: a warm core on the accent, and a wider, cooler
-          halo that keeps the corners from going flat black. */}
-      <span className="bg-brand-500/25 animate-drift absolute top-1/2 left-1/2 size-[26rem] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[110px]" />
-      <span className="bg-brand-600/10 absolute top-1/2 left-1/2 size-[46rem] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[150px]" />
+      {/* Kept tight and behind the stage. A wide, bright glow washes the rings
+          out entirely — the light should sit under the orbit, not flood it. */}
+      <span className="bg-brand-500/18 animate-drift absolute top-[38%] left-1/2 size-80 -translate-x-1/2 -translate-y-1/2 rounded-full blur-[90px]" />
 
-      {RINGS.map((ring, index) => (
-        <span
-          key={ring.size}
-          className={`animate-ripple absolute top-1/2 left-1/2 rounded-full border ${ring.className}`}
-          style={{
-            width: `${ring.size}px`,
-            height: `${ring.size}px`,
-            borderStyle: ring.dashed ? "dashed" : "solid",
-            // Staggered so the rings breathe in sequence, not in unison.
-            animationDelay: `${index * 0.6}s`,
-            ["--ripple-opacity" as string]: String(ring.opacity),
-          }}
-        />
-      ))}
-
-      {ORBITERS.map((orbiter, index) => {
-        const Icon = orbiter.icon;
-        return (
-          <span
-            key={index}
-            className="animate-orbit absolute top-1/2 left-1/2 flex size-10 items-center justify-center"
-            style={{
-              ["--orbit-radius" as string]: String(orbiter.radius),
-              ["--orbit-duration" as string]: String(orbiter.duration),
-              animationDelay: `${orbiter.delay}s`,
-              animationDirection: orbiter.reverse ? "reverse" : "normal",
-              marginTop: "-1.25rem",
-              marginLeft: "-1.25rem",
-            }}
-          >
+      <div className="relative flex flex-col items-center px-10">
+        {/* The orbital stage. Fixed size, and the only thing at its centre is
+            the logo — nothing else can be crossed by a passing mark. */}
+        <div className="relative shrink-0" style={{ width: `${STAGE}px`, height: `${STAGE}px` }}>
+          {RINGS.map((ring, index) => (
             <span
-              className={
-                orbiter.accent
-                  ? "border-brand-500/40 bg-brand-500/15 text-brand-500 flex size-10 items-center justify-center rounded-xl border shadow-lg shadow-black/40 backdrop-blur-sm"
-                  : "border-line-strong bg-surface-2 text-text-secondary flex size-10 items-center justify-center rounded-xl border shadow-lg shadow-black/40 backdrop-blur-sm"
-              }
-            >
-              <Icon className="size-4" />
-            </span>
+              key={ring.size}
+              className={`animate-ripple absolute top-1/2 left-1/2 rounded-full border ${ring.className}`}
+              style={{
+                width: `${ring.size}px`,
+                height: `${ring.size}px`,
+                borderStyle: ring.dashed ? "dashed" : "solid",
+                // Staggered so the rings breathe in sequence, not in unison.
+                animationDelay: `${index * 0.6}s`,
+                ["--ripple-opacity" as string]: String(ring.opacity),
+              }}
+            />
+          ))}
+
+          {ORBITERS.map((orbiter, index) => {
+            const Icon = orbiter.icon;
+            return (
+              <span
+                key={index}
+                className="animate-orbit absolute top-1/2 left-1/2 flex size-9 items-center justify-center"
+                style={{
+                  ["--orbit-radius" as string]: String(orbiter.radius),
+                  ["--orbit-duration" as string]: String(orbiter.duration),
+                  animationDelay: `${orbiter.delay}s`,
+                  animationDirection: orbiter.reverse ? "reverse" : "normal",
+                  marginTop: "-1.125rem",
+                  marginLeft: "-1.125rem",
+                }}
+              >
+                <span
+                  className={
+                    orbiter.accent
+                      ? "border-brand-500/40 bg-brand-500/15 text-brand-500 flex size-9 items-center justify-center rounded-xl border shadow-lg shadow-black/50 backdrop-blur-sm"
+                      : "border-line-strong bg-surface-2 text-text-secondary flex size-9 items-center justify-center rounded-xl border shadow-lg shadow-black/50 backdrop-blur-sm"
+                  }
+                >
+                  <Icon className="size-4" />
+                </span>
+              </span>
+            );
+          })}
+
+          {/* Dead centre, and the only occupant of the orbit's interior. */}
+          <span className="border-line-strong bg-surface-1 absolute top-1/2 left-1/2 flex size-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-2xl border shadow-xl shadow-black/60">
+            <LogoMark className="size-8" />
           </span>
-        );
-      })}
+        </div>
 
-      {/* The centre sits above the rings, with its own backdrop so the type
-          never has to compete with a ring passing behind it. */}
-      <div className="relative flex max-w-sm flex-col items-center px-8 text-center">
-        <span className="border-line-strong bg-surface-1/90 mb-6 flex size-14 items-center justify-center rounded-2xl border shadow-xl shadow-black/50 backdrop-blur-sm">
-          <LogoMark className="size-7" />
-        </span>
+        {/* Below the stage, clear of every orbit. */}
+        <div className="mt-12 max-w-sm text-center">
+          <h2 className="text-2xl font-semibold tracking-tight text-balance">
+            One command center for your entire workflow
+          </h2>
+          <p className="text-text-secondary mt-3 text-sm text-pretty">
+            Projects, deployments, APIs and team activity — together, in one workspace.
+          </p>
 
-        <h2 className="text-2xl font-semibold tracking-tight text-balance">
-          One command center for your entire workflow
-        </h2>
-
-        <p className="text-text-secondary mt-3 text-sm text-pretty">
-          Projects, deployments, APIs and team activity — together, in one workspace.
-        </p>
-
-        <ul className="text-text-tertiary mt-8 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 font-mono text-[11px] tracking-wide uppercase">
-          <li>Deploy</li>
-          <li className="bg-line-strong size-1 rounded-full" />
-          <li>Monitor</li>
-          <li className="bg-line-strong size-1 rounded-full" />
-          <li>Ship</li>
-        </ul>
+          <ul className="text-text-tertiary mt-7 flex items-center justify-center gap-x-4 font-mono text-[11px] tracking-wide uppercase">
+            <li>Deploy</li>
+            <li className="bg-line-strong size-1 rounded-full" />
+            <li>Monitor</li>
+            <li className="bg-line-strong size-1 rounded-full" />
+            <li>Ship</li>
+          </ul>
+        </div>
       </div>
     </section>
   );
