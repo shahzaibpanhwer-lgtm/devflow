@@ -51,9 +51,18 @@ export function LoginForm({ callbackUrl }: { callbackUrl: Route }) {
     });
 
     if (!result || result.error) {
-      // Deliberately vague: naming which half was wrong would let an attacker
-      // confirm whether an address is registered.
-      setFormError("Incorrect email or password.");
+      // Only a genuine credential mismatch gets the credential message. Any
+      // other code means the request failed on our side — reporting that as a
+      // wrong password sends the user off hunting for a typo that isn't there.
+      const rejectedCredentials = result?.error === "CredentialsSignin";
+
+      setFormError(
+        rejectedCredentials
+          ? // Deliberately vague: naming which half was wrong would let an
+            // attacker confirm whether an address is registered.
+            "Incorrect email or password."
+          : "Sign-in is temporarily unavailable. Please try again in a moment.",
+      );
       setPending(false);
       return;
     }

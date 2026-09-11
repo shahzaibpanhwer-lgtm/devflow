@@ -42,7 +42,7 @@ Manage projects, deployments, APIs, GitHub activity and team workflows from one 
 npm install
 
 # 2. Start a local PostgreSQL server (no credentials needed)
-npx prisma dev -n devflow -d
+npx prisma dev devflow -d
 
 # 3. Configure environment
 cp .env.example .env
@@ -132,7 +132,7 @@ metrics that genuinely demand attention.
 - [x] **Phase 3** — Database schema, migrations, seed data
 - [x] **Phase 4** — Authentication (credentials + GitHub OAuth)
 - [x] **Phase 5** — Project CRUD
-- [ ] **Phase 6** — Dashboard
+- [x] **Phase 6** — Dashboard
 - [ ] **Phase 7** — GitHub integration
 - [ ] **Phase 8** — Deployments
 - [ ] **Phase 9** — Analytics
