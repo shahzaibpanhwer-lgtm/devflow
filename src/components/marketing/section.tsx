@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 
+import { SectionBackdrop, type BackdropVariant } from "@/components/marketing/backdrop";
 import { Reveal } from "@/components/marketing/motion";
 import { cn } from "@/lib/utils";
 
@@ -7,14 +8,19 @@ export function Section({
   id,
   children,
   className,
+  backdrop,
 }: {
   id?: string;
   children: ReactNode;
   className?: string;
+  /** Background treatment. Omitted, the section sits on the page surface. */
+  backdrop?: BackdropVariant;
 }) {
   return (
-    <section id={id} className={cn("border-line border-t py-24 sm:py-32", className)}>
-      <div className="mx-auto w-full max-w-6xl px-6">{children}</div>
+    <section id={id} className={cn("border-line relative border-t py-24 sm:py-32", className)}>
+      {backdrop ? <SectionBackdrop variant={backdrop} /> : null}
+      {/* Content is positioned so it always stacks above the backdrop. */}
+      <div className="relative mx-auto w-full max-w-6xl px-6">{children}</div>
     </section>
   );
 }
