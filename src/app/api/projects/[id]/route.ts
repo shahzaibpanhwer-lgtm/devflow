@@ -67,6 +67,7 @@ export async function PATCH(request: Request, { params }: RouteContext) {
         ...(input.githubRepository !== undefined
           ? { githubRepository: input.githubRepository }
           : {}),
+        ...(input.isPublic !== undefined ? { isPublic: input.isPublic } : {}),
       },
     });
 
