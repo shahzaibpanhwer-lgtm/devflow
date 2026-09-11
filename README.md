@@ -141,7 +141,7 @@ metrics that genuinely demand attention.
 - [x] **Phase 12** — Team management
 - [x] **Phase 13** — Public project pages
 - [x] **Phase 14** — Testing, security, performance
-- [ ] **Phase 15** — Animation and responsive polish
+- [x] **Phase 15** — Animation and responsive polish
 - [ ] **Phase 16** — Deployment and release
 
 ## License
