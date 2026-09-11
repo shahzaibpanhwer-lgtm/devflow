@@ -1,16 +1,35 @@
 import { ActivityType } from "@prisma/client";
 
 import { recordActivity } from "@/lib/activity";
+import { authenticateApiKey } from "@/lib/api-keys";
 import { badRequest, created, fail, ok, serverError, validationFailed } from "@/lib/api-response";
 import { AuthError, requireUser } from "@/lib/authz";
 import { db } from "@/lib/db";
-import { listProjects, slugExists } from "@/lib/projects";
+import { getProjectDetail, listProjects, slugExists } from "@/lib/projects";
 import { uniqueSlug } from "@/lib/slug";
 import { createProjectSchema, listProjectsSchema } from "@/lib/validations/project";
 
-/** GET /api/projects — projects visible to the signed-in user. */
+/**
+ * GET /api/projects — projects visible to the caller.
+ *
+ * Accepts either a browser session or an API key. A key is scoped to a single
+ * project, so it returns that project alone rather than the issuer's whole
+ * workspace — a key handed to a CI job should not widen into an account.
+ */
 export async function GET(request: Request) {
   try {
+    const apiKey = await authenticateApiKey(request);
+
+    if (apiKey) {
+      const project = await getProjectDetail(apiKey.projectId);
+      if (!project) return fail("Project not found", 404);
+
+      return ok({
+        projects: [project],
+        pagination: { page: 1, perPage: 1, total: 1, totalPages: 1 },
+      });
+    }
+
     const user = await requireUser();
 
     const params = Object.fromEntries(new URL(request.url).searchParams);
