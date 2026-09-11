@@ -23,6 +23,8 @@ import { Button } from "@/components/ui/button";
 import { relativeTime } from "@/lib/activity";
 import { getProjectAccess, PROJECT_PERMISSIONS, roleAtLeast } from "@/lib/authz";
 import { getCurrentUser } from "@/lib/current-user";
+import { hasGithubConnection } from "@/lib/github/client";
+import { RepositoryPanel } from "@/components/github/repository-panel";
 import { getProjectDetail, type ProjectDetail } from "@/lib/projects";
 import type { DeploymentStatus, ProjectStatus } from "@/lib/status";
 
@@ -206,7 +208,10 @@ export default async function ProjectDetailPage({ params }: PageProps) {
   const access = await getProjectAccess(id, user.id);
   if (!access) notFound();
 
-  const project = await getProjectDetail(id);
+  const [project, githubConnected] = await Promise.all([
+    getProjectDetail(id),
+    hasGithubConnection(user.id),
+  ]);
   if (!project) notFound();
 
   const canEdit = roleAtLeast(access.effectiveRole, PROJECT_PERMISSIONS.update);
@@ -292,7 +297,34 @@ export default async function ProjectDetailPage({ params }: PageProps) {
 
       <ProjectTabs
         panels={{
-          overview: <OverviewPanel project={project} />,
+          overview: (
+            <div className="space-y-5">
+              <OverviewPanel project={project} />
+              <RepositoryPanel
+                userId={user.id}
+                projectId={project.id}
+                canEdit={canEdit}
+                githubConnected={githubConnected}
+                repository={
+                  project.repository
+                    ? {
+                        fullName: project.repository.fullName,
+                        url: project.repository.url,
+                        description: project.repository.description,
+                        language: project.repository.language,
+                        stars: project.repository.stars,
+                        forks: project.repository.forks,
+                        openIssues: project.repository.openIssues,
+                        isPrivate: project.repository.isPrivate,
+                        defaultBranch: project.repository.defaultBranch,
+                        pushedAt: project.repository.pushedAt,
+                        lastSyncedAt: project.repository.lastSyncedAt,
+                      }
+                    : null
+                }
+              />
+            </div>
+          ),
           deployments: (
             <EmptyState
               icon={RocketIcon}
