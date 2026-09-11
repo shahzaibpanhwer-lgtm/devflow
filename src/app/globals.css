@@ -97,6 +97,13 @@
   --color-chart-status-warning: var(--chart-status-warning);
   --color-chart-status-danger: var(--chart-status-danger);
 
+  /* Motion used by the sign-in visual. Registered here so Tailwind v4 emits
+     the utilities; the global prefers-reduced-motion guard at the bottom of
+     this file stops them for anyone who has asked for less movement. */
+  --animate-orbit: orbit calc(var(--orbit-duration, 24) * 1s) linear infinite;
+  --animate-ripple: ripple 4s ease-in-out infinite;
+  --animate-drift: drift 18s ease-in-out infinite;
+
   /* Radii — restrained, never pill-shaped cards */
   --radius-sm: calc(var(--radius) - 2px);
   --radius-md: var(--radius);
@@ -269,5 +276,45 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Sign-in visual
+   --------------------------------------------------------------------------- */
+
+/* Travels a child around a circle of --orbit-radius while counter-rotating it,
+   so the orbiting element itself stays upright. */
+@keyframes orbit {
+  0% {
+    transform: rotate(0deg) translateY(calc(var(--orbit-radius, 120) * 1px)) rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg) translateY(calc(var(--orbit-radius, 120) * 1px)) rotate(-360deg);
+  }
+}
+
+/* A slow breath rather than a pulse — the rings should feel alive, not urgent. */
+@keyframes ripple {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: var(--ripple-opacity, 0.16);
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.04);
+    opacity: calc(var(--ripple-opacity, 0.16) * 1.6);
+  }
+}
+
+/* Barely-there movement on the background glow, to stop it reading as a static
+   gradient blob. */
+@keyframes drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(0, -2%, 0) scale(1.06);
   }
 }
