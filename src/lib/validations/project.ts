@@ -66,7 +66,16 @@ const githubRepository = z
 
 export const projectStatusSchema = z.enum(PROJECT_STATUSES);
 
-export const createProjectSchema = z.object({
+/**
+ * The project fields, with no defaults applied.
+ *
+ * Creation and update are built from this separately. They cannot share one
+ * schema through `.partial()`: that makes a field optional but leaves its
+ * `.default()` in place, so an absent key still arrives with a value. A patch
+ * that only renamed a project was emerging with `status: "DEVELOPMENT"`
+ * attached and silently demoting live projects.
+ */
+const projectFields = {
   name: z
     .string()
     .trim()
@@ -74,19 +83,30 @@ export const createProjectSchema = z.object({
     .max(60, "Name must be 60 characters or fewer"),
   description: optionalText(280, "Description"),
   framework: optionalText(40, "Framework"),
-  status: projectStatusSchema.default("DEVELOPMENT"),
+  status: projectStatusSchema,
   productionUrl: optionalUrl,
   repositoryUrl: optionalUrl,
   githubRepository,
   /** Publishes the project at /p/[slug]. Opt-in, never implied. */
   isPublic: z.boolean().optional(),
+};
+
+export const createProjectSchema = z.object({
+  ...projectFields,
+  // A new project has to start somewhere, so this default is wanted here.
+  status: projectStatusSchema.default("DEVELOPMENT"),
 });
 
 /**
- * Every field optional, but at least one must be present — an empty PATCH is
- * a client bug, not a no-op worth recording as an update.
+ * Every field optional, and no defaults — an update must change only what was
+ * actually sent. At least one field must be present, since an empty PATCH is a
+ * client bug rather than a no-op worth recording as an update.
  */
-export const updateProjectSchema = createProjectSchema
+export const updateProjectSchema = z
+  .object({
+    ...projectFields,
+    status: projectStatusSchema.optional(),
+  })
   .partial()
   .refine((value) => Object.keys(value).length > 0, {
     message: "Provide at least one field to update",
