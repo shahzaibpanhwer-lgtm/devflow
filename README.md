@@ -138,7 +138,7 @@ metrics that genuinely demand attention.
 - [x] **Phase 9** — Analytics
 - [x] **Phase 10** — API playground
 - [x] **Phase 11** — API keys and documentation
-- [ ] **Phase 12** — Team management
+- [x] **Phase 12** — Team management
 - [ ] **Phase 13** — Public project pages
 - [ ] **Phase 14** — Testing, security, performance
 - [ ] **Phase 15** — Animation and responsive polish
