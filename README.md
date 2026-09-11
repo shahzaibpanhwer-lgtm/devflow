@@ -136,7 +136,7 @@ metrics that genuinely demand attention.
 - [x] **Phase 7** — GitHub integration
 - [x] **Phase 8** — Deployments
 - [x] **Phase 9** — Analytics
-- [ ] **Phase 10** — API playground
+- [x] **Phase 10** — API playground
 - [ ] **Phase 11** — API keys and documentation
 - [ ] **Phase 12** — Team management
 - [ ] **Phase 13** — Public project pages
