@@ -1,24 +1,97 @@
-import "server-only";
-
 import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
+import { Pool } from "pg";
 
 /**
- * Error text Postgres drivers use when the far end hung up on a pooled
- * connection that looked alive. The query never reached the database, so
- * replaying it once is safe — no statement can be applied twice.
+ * Reads that Prisma reports as connection failures rather than query
+ * failures. The query never reached the server, so repeating it is safe.
  */
-const CLOSED_CONNECTION_PATTERNS = [
-  "Server has closed the connection",
-  "Connection terminated",
-  "ConnectionClosed",
-  "connection closed",
-  "ECONNRESET",
-];
+const CONNECTION_ERROR_CODES = new Set([
+  "P1017", // server closed the connection
+  "P1001", // cannot reach the server
+  "P1002", // timed out reaching the server
+  "P2010", // raw query failed — the reason is only in the message
+]);
 
-function isClosedConnection(error: unknown): boolean {
+/*
+ * Retry budget for a read whose connection died.
+ *
+ * Enough attempts to outlast a pool where every connection has gone stale at
+ * once, which is what a burst of concurrent renders after an idle spell can
+ * produce. The worst case adds well under two seconds before the error is
+ * surfaced, and the common case costs one extra round trip.
+ */
+const RETRY_ATTEMPTS = 8;
+const RETRY_BASE_DELAY_MS = 25;
+const RETRY_MAX_DELAY_MS = 250;
+
+/** Operations with no side effects, and therefore safe to repeat. */
+const RETRYABLE_OPERATIONS = new Set([
+  "findUnique",
+  "findUniqueOrThrow",
+  "findFirst",
+  "findFirstOrThrow",
+  "findMany",
+  "count",
+  "aggregate",
+  "groupBy",
+  "$queryRaw",
+  "$queryRawUnsafe",
+]);
+
+/**
+ * Transient connection trouble, as opposed to a query the server rejected.
+ *
+ * Both the code and the message are examined, and neither short-circuits the
+ * other. An earlier version returned on the code alone, which silently
+ * excluded raw queries: those fail as P2010 — a generic "raw query failed" —
+ * with the real reason only in the message. Since the analytics page is built
+ * on four raw queries, it was the one page the retry never protected.
+ */
+function isConnectionError(error: unknown): boolean {
+  if (
+    error instanceof Prisma.PrismaClientKnownRequestError &&
+    CONNECTION_ERROR_CODES.has(error.code) &&
+    error.code !== "P2010"
+  ) {
+    return true;
+  }
+
+  /*
+   * Situations the adapter reports in the message rather than a code. All
+   * transient, and all safe to repeat for a read:
+   *
+   *   - the socket was closed underneath us
+   *   - the pool could not hand one out in time, because a burst of
+   *     concurrent renders wanted more connections than it holds
+   */
   const message = error instanceof Error ? error.message : String(error);
-  return CLOSED_CONNECTION_PATTERNS.some((pattern) => message.includes(pattern));
+  return /ConnectionClosed|Server has closed the connection|Connection terminated|timeout exceeded when trying to connect/i.test(
+    message,
+  );
+}
+
+/**
+ * Reads a pool setting from the environment, falling back to the default.
+ *
+ * The defaults below suit a hosted Postgres. The local `prisma dev` server is
+ * a different animal: it discards pooled connections far sooner than a hosted
+ * database does, and its own start-up notes ask for "the smallest positive"
+ * idle timeout. Left at the hosted default it keeps handing back sockets it
+ * has already closed, which showed up as intermittent 500s on whichever page
+ * happened to ask first after a quiet spell. Rather than pick one number that
+ * is wrong for one of the two, each is overridable.
+ */
+function poolSetting(name: string, fallback: number): number {
+  const raw = process.env[name];
+  if (raw === undefined || raw === "") return fallback;
+
+  const value = Number(raw);
+  if (!Number.isFinite(value) || value < 0) {
+    throw new Error(`${name} must be a non-negative number, got "${raw}"`);
+  }
+
+  return value;
 }
 
 function createClient() {
@@ -30,53 +103,91 @@ function createClient() {
     );
   }
 
-  const adapter = new PrismaPg({
+  /*
+   * The pool is constructed here rather than left to the adapter, so an
+   * `error` listener can be attached. node-postgres emits that event when a
+   * pooled connection dies while idle; with no listener Node treats it as an
+   * unhandled error, and the client is not reliably evicted — leaving the
+   * pool to hand the dead connection out again on the next request.
+   */
+  const pool = new Pool({
     connectionString,
     /*
      * The adapter is backed by node-postgres, which ignores Prisma's engine
-     * parameters (connection_limit, pool_timeout, socket_timeout and friends)
-     * when they appear in the connection URL — pool behaviour has to be set
-     * here. Retiring idle connections quickly keeps the pool ahead of servers
-     * and proxies that hang up on them.
+     * parameters in the URL — pool behaviour has to be configured here.
+     *
+     * idleTimeoutMillis is the balance to strike. Too long and the pool holds
+     * connections the server has already hung up on, handing out dead ones.
+     * Too short — 10s, as this was — and a burst of page renders spends its
+     * time re-establishing connections it just discarded, until acquisition
+     * itself times out. Thirty seconds stays ahead of typical proxy timeouts
+     * without churning under load.
+     *
+     * A single dashboard render issues six queries in parallel, so the pool
+     * has to absorb several times the number of concurrent requests.
      */
-    max: 10,
-    idleTimeoutMillis: 10_000,
-    connectionTimeoutMillis: 10_000,
+    max: poolSetting("DATABASE_POOL_MAX", 10),
+    idleTimeoutMillis: poolSetting("DATABASE_POOL_IDLE_TIMEOUT_MS", 30_000),
+    connectionTimeoutMillis: poolSetting("DATABASE_POOL_CONNECTION_TIMEOUT_MS", 15_000),
     keepAlive: true,
   });
 
-  const base = new PrismaClient({
+  // Logged rather than thrown: a connection dying while idle is routine, and
+  // the pool replaces it. Without this handler it would crash the process.
+  pool.on("error", (error) => {
+    console.error("[db] idle client error, connection discarded:", error.message);
+  });
+
+  const adapter = new PrismaPg(pool);
+
+  const client = new PrismaClient({
     adapter,
     log: process.env.NODE_ENV === "development" ? ["warn", "error"] : ["error"],
   });
 
-  /*
-   * Retry when a pooled connection turns out to be dead.
+  /**
+   * Retries a read whose connection died underneath it.
    *
-   * A pool cannot know the other end hung up until it tries to use a
-   * connection, so the first query after the server starts can fail on a
-   * socket that was already gone — and because the pool may hold several such
-   * connections, an immediate retry can draw another one. Backing off briefly
-   * gives the pool time to discard the broken clients and dial fresh ones.
+   * Even with an aggressive idle timeout a connection can be closed between
+   * being handed out and being used — by a proxy, a failover, or a platform
+   * recycling idle sockets. Left alone that surfaces as a 500 on a page that
+   * would have rendered perfectly on the next attempt, which is what it was
+   * doing to the public project page.
    *
-   * Only closed-connection failures are retried, and such a query never
-   * reached the database, so replaying it cannot apply a statement twice.
+   * Only side-effect-free operations are repeated. A create or update that
+   * failed this way *might* have committed before the socket dropped, and
+   * silently repeating it could write twice — so those still surface the
+   * error and let the caller decide.
    */
-  return base.$extends({
+  return client.$extends({
     query: {
-      async $allOperations({ args, query }) {
-        const delays = [0, 60, 200];
+      async $allOperations({ operation, args, query }) {
+        const attempts = RETRYABLE_OPERATIONS.has(operation) ? RETRY_ATTEMPTS : 1;
         let lastError: unknown;
 
-        for (const delay of delays) {
-          if (delay > 0) {
-            await new Promise((resolve) => setTimeout(resolve, delay));
-          }
+        for (let attempt = 0; attempt < attempts; attempt += 1) {
           try {
             return await query(args);
           } catch (error) {
-            if (!isClosedConnection(error)) throw error;
             lastError = error;
+            if (attempt === attempts - 1 || !isConnectionError(error)) throw error;
+
+            /*
+             * Short, capped backoff rather than a doubling one.
+             *
+             * The thing being waited out is not a busy server: a dead socket
+             * fails the moment it is used, and the next attempt draws a
+             * *different* connection from the pool. So what matters is getting
+             * through the stale ones, not pausing politely between tries — and
+             * a doubling backoff spends its whole budget sleeping instead.
+             *
+             * Measured on a local Postgres that drops connections eagerly:
+             * four tries at a doubling backoff left roughly one request in
+             * twelve failing under concurrent load, because the pool can hold
+             * more stale connections than that many tries can cycle past.
+             */
+            const delay = Math.min(RETRY_BASE_DELAY_MS * 2 ** attempt, RETRY_MAX_DELAY_MS);
+            await new Promise((resolve) => setTimeout(resolve, delay));
           }
         }
 
@@ -86,15 +197,13 @@ function createClient() {
   });
 }
 
-type DatabaseClient = ReturnType<typeof createClient>;
-
 /**
  * Next.js clears the module registry on every hot reload in development, which
  * would otherwise open a new connection pool per reload until Postgres refuses
  * further clients. Caching the instance on `globalThis` keeps a single pool.
  */
 const globalForPrisma = globalThis as unknown as {
-  prisma: DatabaseClient | undefined;
+  prisma: ReturnType<typeof createClient> | undefined;
 };
 
 export const db = globalForPrisma.prisma ?? createClient();
