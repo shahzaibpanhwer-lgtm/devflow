@@ -61,7 +61,14 @@ export function LoginForm({ callbackUrl }: { callbackUrl: Route }) {
           ? // Deliberately vague: naming which half was wrong would let an
             // attacker confirm whether an address is registered.
             "Incorrect email or password."
-          : "Sign-in is temporarily unavailable. Please try again in a moment.",
+          : /*
+             * Covers both a server-side failure and being throttled after
+             * repeated wrong passwords, because Auth.js reports them with the
+             * same code. It therefore must not promise a timeframe it cannot
+             * keep — an earlier version said "in a moment", which is a
+             * fifteen-minute lie to anyone who has just locked themselves out.
+             */
+            "Sign-in is unavailable right now. If you have tried several incorrect passwords, wait a few minutes before trying again.",
       );
       setPending(false);
       return;

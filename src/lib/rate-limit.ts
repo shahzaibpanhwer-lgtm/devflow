@@ -66,6 +66,46 @@ export function rateLimit(
 }
 
 /**
+ * Whether `key` still has allowance left, without consuming any of it.
+ *
+ * Sign-in needs the check and the count to be separate steps, because only a
+ * *failed* attempt should count towards the limit. Consuming on every check
+ * would throttle successful sign-ins just as hard as failed ones, which
+ * punishes ordinary use — and brute force is made of failures anyway, so
+ * counting only those is both kinder and more precise.
+ */
+export function checkRateLimit(key: string, limit: number): RateLimitResult {
+  const now = Date.now();
+  const bucket = buckets.get(key);
+
+  if (!bucket || bucket.resetAt <= now) {
+    return { allowed: true, remaining: limit, retryAfter: 0 };
+  }
+
+  if (bucket.count >= limit) {
+    return {
+      allowed: false,
+      remaining: 0,
+      retryAfter: Math.ceil((bucket.resetAt - now) / 1000),
+    };
+  }
+
+  return { allowed: true, remaining: limit - bucket.count, retryAfter: 0 };
+}
+
+/**
+ * Forgets everything counted against `key`.
+ *
+ * Called when a sign-in succeeds, so a few mistyped passwords followed by the
+ * right one leave no residue. Without this, someone who fumbled their password
+ * and then got in would still be most of the way to a lockout for the rest of
+ * the window.
+ */
+export function clearRateLimit(key: string): void {
+  buckets.delete(key);
+}
+
+/**
  * Best-effort client address. Behind a proxy the first entry of
  * `x-forwarded-for` is the original client; falling back to a constant means a
  * missing header degrades to a global limit rather than no limit at all.
