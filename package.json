@@ -24,6 +24,10 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
+    "audit": "npm run audit:api && npm run audit:pages && npm run audit:ui",
+    "audit:api": "node scripts/audit/api.mjs",
+    "audit:pages": "node scripts/audit/pages.mjs",
+    "audit:ui": "node scripts/audit/ui.mjs",
     "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {

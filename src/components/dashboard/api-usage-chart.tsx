@@ -11,6 +11,7 @@ import {
   YAxis,
 } from "recharts";
 
+import { ChartMount } from "@/components/charts/chart-mount";
 import type { UsagePoint } from "@/lib/dashboard";
 
 /**
@@ -88,93 +89,103 @@ export function ApiUsageChart({ data }: { data: UsagePoint[] }) {
         table for screen readers and as the fallback when colour or graphics are
         unavailable.
       */}
-      <table className="sr-only">
-        <caption>Daily API requests over the last {data.length} days</caption>
-        <thead>
-          <tr>
-            <th scope="col">Date</th>
-            <th scope="col">Requests</th>
-            <th scope="col">Failed</th>
-          </tr>
-        </thead>
-        <tbody>
-          {data.map((point) => (
-            <tr key={point.date}>
-              <th scope="row">{formatDay(point.date)}</th>
-              <td>{point.requests}</td>
-              <td>{point.errors}</td>
+      {/*
+        The wrapper carries sr-only, not the table. A table auto-sizes to its
+        content and ignores the 1px width the utility sets, so putting it on
+        the table left the document scrolling sideways on narrow screens even
+        though nothing was visible.
+      */}
+      <div className="sr-only">
+        <table>
+          <caption>Daily API requests over the last {data.length} days</caption>
+          <thead>
+            <tr>
+              <th scope="col">Date</th>
+              <th scope="col">Requests</th>
+              <th scope="col">Failed</th>
             </tr>
-          ))}
-        </tbody>
-        <tfoot>
-          <tr>
-            <th scope="row">Total</th>
-            <td>{total}</td>
-            <td>{data.reduce((sum, point) => sum + point.errors, 0)}</td>
-          </tr>
-        </tfoot>
-      </table>
-
-      <div className="h-56 w-full" aria-hidden="true">
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: -16 }}>
-            <defs>
-              <linearGradient id="usage-fill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="var(--chart-brand)" stopOpacity={0.28} />
-                <stop offset="100%" stopColor="var(--chart-brand)" stopOpacity={0.02} />
-              </linearGradient>
-            </defs>
-
-            {/* Recessive grid: horizontal only, so it guides the eye without
-              competing with the data. */}
-            <CartesianGrid
-              vertical={false}
-              stroke="var(--line)"
-              strokeDasharray="3 3"
-              strokeOpacity={0.7}
-            />
-
-            <XAxis
-              dataKey="date"
-              tickFormatter={formatDay}
-              interval={tickInterval}
-              tickLine={false}
-              axisLine={false}
-              tick={{ fill: "var(--text-tertiary)", fontSize: 11 }}
-              dy={4}
-            />
-            <YAxis
-              tickFormatter={formatCompact}
-              tickLine={false}
-              axisLine={false}
-              width={52}
-              tick={{ fill: "var(--text-tertiary)", fontSize: 11 }}
-              allowDecimals={false}
-            />
-
-            <Tooltip
-              content={<ChartTooltip />}
-              cursor={{ stroke: "var(--line-strong)", strokeWidth: 1 }}
-            />
-
-            <Area
-              type="monotone"
-              dataKey="requests"
-              stroke="var(--chart-brand)"
-              strokeWidth={2}
-              fill="url(#usage-fill)"
-              isAnimationActive={!prefersReducedMotion}
-              animationDuration={700}
-              activeDot={{
-                r: 4,
-                fill: "var(--chart-brand)",
-                stroke: "var(--surface-1)",
-                strokeWidth: 2,
-              }}
-            />
-          </AreaChart>
-        </ResponsiveContainer>
+          </thead>
+          <tbody>
+            {data.map((point) => (
+              <tr key={point.date}>
+                <th scope="row">{formatDay(point.date)}</th>
+                <td>{point.requests}</td>
+                <td>{point.errors}</td>
+              </tr>
+            ))}
+          </tbody>
+          <tfoot>
+            <tr>
+              <th scope="row">Total</th>
+              <td>{total}</td>
+              <td>{data.reduce((sum, point) => sum + point.errors, 0)}</td>
+            </tr>
+          </tfoot>
+        </table>
       </div>
+
+      <ChartMount height="h-56 w-full">
+        <div className="h-full w-full" aria-hidden="true">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: -16 }}>
+              <defs>
+                <linearGradient id="usage-fill" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="var(--chart-brand)" stopOpacity={0.28} />
+                  <stop offset="100%" stopColor="var(--chart-brand)" stopOpacity={0.02} />
+                </linearGradient>
+              </defs>
+
+              {/* Recessive grid: horizontal only, so it guides the eye without
+              competing with the data. */}
+              <CartesianGrid
+                vertical={false}
+                stroke="var(--line)"
+                strokeDasharray="3 3"
+                strokeOpacity={0.7}
+              />
+
+              <XAxis
+                dataKey="date"
+                tickFormatter={formatDay}
+                interval={tickInterval}
+                tickLine={false}
+                axisLine={false}
+                tick={{ fill: "var(--text-tertiary)", fontSize: 11 }}
+                dy={4}
+              />
+              <YAxis
+                tickFormatter={formatCompact}
+                tickLine={false}
+                axisLine={false}
+                width={52}
+                tick={{ fill: "var(--text-tertiary)", fontSize: 11 }}
+                allowDecimals={false}
+              />
+
+              <Tooltip
+                content={<ChartTooltip />}
+                cursor={{ stroke: "var(--line-strong)", strokeWidth: 1 }}
+              />
+
+              <Area
+                type="monotone"
+                dataKey="requests"
+                stroke="var(--chart-brand)"
+                strokeWidth={2}
+                fill="url(#usage-fill)"
+                isAnimationActive={!prefersReducedMotion}
+                animationDuration={700}
+                activeDot={{
+                  r: 4,
+                  fill: "var(--chart-brand)",
+                  stroke: "var(--surface-1)",
+                  strokeWidth: 2,
+                }}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      </ChartMount>
     </div>
   );
 }

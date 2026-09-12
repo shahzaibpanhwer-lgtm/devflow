@@ -20,6 +20,7 @@ import {
   formatBucketLong,
   tickInterval,
 } from "@/components/analytics/chart-primitives";
+import { ChartMount } from "@/components/charts/chart-mount";
 import type { AnalyticsRange, LatencyPoint } from "@/lib/analytics-range";
 
 /**
@@ -65,25 +66,33 @@ export function LatencyChart({ data, range }: { data: LatencyPoint[]; range: Ana
 
   return (
     <div className="w-full">
-      <table className="sr-only">
-        <caption>Median and 95th percentile response time in milliseconds, {range}</caption>
-        <thead>
-          <tr>
-            <th scope="col">Period</th>
-            <th scope="col">Median (ms)</th>
-            <th scope="col">95th percentile (ms)</th>
-          </tr>
-        </thead>
-        <tbody>
-          {data.map((point) => (
-            <tr key={point.bucket}>
-              <th scope="row">{formatBucketLong(point.bucket, range)}</th>
-              <td>{point.median}</td>
-              <td>{point.p95}</td>
+      {/*
+        The wrapper carries sr-only, not the table. A table auto-sizes to its
+        content and ignores the 1px width the utility sets, so putting it on
+        the table left the document scrolling sideways on narrow screens even
+        though nothing was visible.
+      */}
+      <div className="sr-only">
+        <table>
+          <caption>Median and 95th percentile response time in milliseconds, {range}</caption>
+          <thead>
+            <tr>
+              <th scope="col">Period</th>
+              <th scope="col">Median (ms)</th>
+              <th scope="col">95th percentile (ms)</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {data.map((point) => (
+              <tr key={point.bucket}>
+                <th scope="row">{formatBucketLong(point.bucket, range)}</th>
+                <td>{point.median}</td>
+                <td>{point.p95}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
       {/* The legend is real markup, not a chart-drawn one, so it is readable
           by assistive technology and keeps its contrast in both themes. */}
@@ -100,51 +109,53 @@ export function LatencyChart({ data, range }: { data: LatencyPoint[]; range: Ana
         ))}
       </ul>
 
-      <div className="h-56 w-full" aria-hidden="true">
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: -12 }}>
-            <CartesianGrid {...GRID_PROPS} />
+      <ChartMount height="h-56 w-full">
+        <div className="h-full w-full" aria-hidden="true">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: -12 }}>
+              <CartesianGrid {...GRID_PROPS} />
 
-            <XAxis
-              dataKey="bucket"
-              tickFormatter={(value: string) => formatBucket(value, range)}
-              interval={tickInterval(data.length)}
-              tickLine={false}
-              axisLine={false}
-              tick={AXIS_TICK}
-              dy={4}
-            />
-            <YAxis
-              tickFormatter={(value: number) => `${value}`}
-              tickLine={false}
-              axisLine={false}
-              width={48}
-              tick={AXIS_TICK}
-              allowDecimals={false}
-              unit=""
-            />
-
-            <Tooltip
-              content={<ChartTooltip range={range} />}
-              cursor={{ stroke: "var(--line-strong)", strokeWidth: 1 }}
-            />
-
-            {SERIES.map((series) => (
-              <Line
-                key={series.key}
-                type="monotone"
-                dataKey={series.key}
-                stroke={series.color}
-                strokeWidth={2}
-                dot={false}
-                isAnimationActive={!prefersReducedMotion}
-                animationDuration={650}
-                activeDot={{ r: 4, stroke: "var(--surface-1)", strokeWidth: 2 }}
+              <XAxis
+                dataKey="bucket"
+                tickFormatter={(value: string) => formatBucket(value, range)}
+                interval={tickInterval(data.length)}
+                tickLine={false}
+                axisLine={false}
+                tick={AXIS_TICK}
+                dy={4}
               />
-            ))}
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
+              <YAxis
+                tickFormatter={(value: number) => `${value}`}
+                tickLine={false}
+                axisLine={false}
+                width={48}
+                tick={AXIS_TICK}
+                allowDecimals={false}
+                unit=""
+              />
+
+              <Tooltip
+                content={<ChartTooltip range={range} />}
+                cursor={{ stroke: "var(--line-strong)", strokeWidth: 1 }}
+              />
+
+              {SERIES.map((series) => (
+                <Line
+                  key={series.key}
+                  type="monotone"
+                  dataKey={series.key}
+                  stroke={series.color}
+                  strokeWidth={2}
+                  dot={false}
+                  isAnimationActive={!prefersReducedMotion}
+                  animationDuration={650}
+                  activeDot={{ r: 4, stroke: "var(--surface-1)", strokeWidth: 2 }}
+                />
+              ))}
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </ChartMount>
     </div>
   );
 }
