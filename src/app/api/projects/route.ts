@@ -1,9 +1,10 @@
-import { ActivityType } from "@prisma/client";
+import { ActivityType, TeamRole } from "@prisma/client";
 
 import { recordActivity } from "@/lib/activity";
 import { authenticateApiKey } from "@/lib/api-keys";
 import { badRequest, created, fail, ok, serverError, validationFailed } from "@/lib/api-response";
 import { AuthError, requireUser } from "@/lib/authz";
+import { roleAtLeast } from "@/lib/roles";
 import { db } from "@/lib/db";
 import { getProjectDetail, listProjects, slugExists } from "@/lib/projects";
 import { uniqueSlug } from "@/lib/slug";
@@ -81,13 +82,28 @@ export async function POST(request: Request) {
     // user cannot claim a reserved or another project's slug.
     const slug = await uniqueSlug(input.name, slugExists);
 
-    // New projects join the team the user already belongs to, so colleagues
-    // can see them without a separate sharing step.
+    /*
+     * New projects join the team the user already belongs to, so colleagues
+     * can see them without a separate sharing step — but only if the user may
+     * write to that team.
+     *
+     * Without this check a viewer could create a project, have it attached to
+     * a team they only have read access to, and — being the owner of the new
+     * record — gain the right to deploy it, issue keys against it and delete
+     * it. A read-only role would have written into a shared workspace and
+     * escalated to full control over what it wrote.
+     */
     const membership = await db.teamMember.findFirst({
       where: { userId: user.id },
-      select: { teamId: true },
+      select: { teamId: true, role: true },
       orderBy: { createdAt: "asc" },
     });
+
+    if (membership && !roleAtLeast(membership.role, TeamRole.DEVELOPER)) {
+      return fail("Your role does not allow creating projects in this team", 403, {
+        code: "FORBIDDEN",
+      });
+    }
 
     const project = await db.project.create({
       data: {

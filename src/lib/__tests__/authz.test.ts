@@ -196,6 +196,23 @@ describe("canRemoveMember", () => {
   });
 });
 
+describe("creating a project in a team", () => {
+  /*
+   * Regression. Project creation attached the new project to the caller's
+   * team without checking whether they could write to it. A viewer could
+   * therefore create a project, have it appear in a team they only had read
+   * access to, and — as the owner of that record — gain the right to deploy
+   * it, issue keys against it and delete it. A read-only role escalating to
+   * full control over what it had just written.
+   */
+  it("requires at least the developer role", () => {
+    expect(roleAtLeast(TeamRole.VIEWER, TeamRole.DEVELOPER)).toBe(false);
+    expect(roleAtLeast(TeamRole.DEVELOPER, TeamRole.DEVELOPER)).toBe(true);
+    expect(roleAtLeast(TeamRole.ADMIN, TeamRole.DEVELOPER)).toBe(true);
+    expect(roleAtLeast(TeamRole.OWNER, TeamRole.DEVELOPER)).toBe(true);
+  });
+});
+
 describe("canInvite", () => {
   it("allows admins and owners only", () => {
     expect(canInvite(TeamRole.OWNER).allowed).toBe(true);
