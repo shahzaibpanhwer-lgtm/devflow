@@ -131,9 +131,15 @@
   --line-strong: #2b3236;
 
   /* Text ramp */
+  /* Both muted tones clear 4.5:1 against every surface they sit on, measured
+     rather than judged. The tertiary tone was #626b71 — 2.99:1 on surface-3,
+     well under the minimum — and it carries timestamps, placeholders, table
+     metadata and axis labels across the whole application, so the failure was
+     everywhere at once. Secondary was lifted with it to keep a legible step
+     between the two rather than collapsing the hierarchy to fix contrast. */
   --text-primary: #f4f6f7;
-  --text-secondary: #8d959b;
-  --text-tertiary: #626b71;
+  --text-secondary: #a3abb1;
+  --text-tertiary: #838c92;
 
   /* Status */
   --status-success: #2fbf71;

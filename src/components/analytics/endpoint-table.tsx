@@ -1,12 +1,18 @@
 import type { EndpointRow } from "@/lib/analytics-range";
 import { cn } from "@/lib/utils";
 
+/*
+ * Method colours come from the text palette, not the chart palette. The chart
+ * tokens are stepped for marks on a chart surface and are too dark for text —
+ * DELETE measured 4.1:1 against the 4.5 minimum. The status tokens all clear
+ * it, and the method name is always spelled out beside the colour anyway.
+ */
 const METHOD_CLASS: Record<string, string> = {
-  GET: "text-chart-1",
-  POST: "text-chart-status-success",
-  PUT: "text-chart-status-warning",
-  PATCH: "text-chart-status-warning",
-  DELETE: "text-chart-status-danger",
+  GET: "text-status-info",
+  POST: "text-status-success",
+  PUT: "text-status-warning",
+  PATCH: "text-status-warning",
+  DELETE: "text-status-danger",
 };
 
 /**
