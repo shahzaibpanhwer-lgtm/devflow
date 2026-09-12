@@ -25,8 +25,16 @@ export const authConfig = {
         GitHub({
           clientId: process.env.GITHUB_CLIENT_ID,
           clientSecret: process.env.GITHUB_CLIENT_SECRET,
-          // Repository scope powers the GitHub integration phase.
+          // Repository scope powers the GitHub integration.
           authorization: { params: { scope: "read:user user:email repo" } },
+          /*
+           * PKCE alone would cover this — the code verifier is held in a
+           * cookie bound to the browser that began the flow, so a code
+           * obtained elsewhere cannot be redeemed against this session. State
+           * is added anyway: it costs one parameter and one cookie, and it is
+           * what the OAuth security guidance asks for by name.
+           */
+          checks: ["pkce", "state"],
         }),
       ]
     : [],
