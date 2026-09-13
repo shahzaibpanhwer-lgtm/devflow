@@ -18,8 +18,9 @@ Manage projects, deployments, APIs, GitHub activity and team workflows from one 
 
 ---
 
-> **Status: in active development.** Built in phases — this README grows as
-> features land. See [Roadmap](#roadmap) for what is done and what is next.
+> **Status: live.** Built in phases, all sixteen shipped — see
+> [Roadmap](#roadmap). Running at
+> [devflow-pink-nu.vercel.app](https://devflow-pink-nu.vercel.app).
 
 ## Tech stack
 
@@ -77,6 +78,25 @@ Open [http://localhost:3000](http://localhost:3000).
 | `GITHUB_CLIENT_SECRET` | GitHub OAuth app client secret                           |
 
 See [`.env.example`](.env.example). Real credentials are never committed.
+
+## Deployment
+
+Hosted on Vercel, deploying from `main`, against a Neon PostgreSQL database.
+
+The build command applies migrations before compiling, so a schema change
+ships with the code that depends on it:
+
+```bash
+prisma generate && prisma migrate deploy && next build
+```
+
+Set the four variables above in the Vercel project — `.env` is gitignored and
+never reaches the build. The GitHub OAuth app needs its own callback URL per
+environment, since each app allows only one:
+
+```
+https://<your-domain>/api/auth/callback/github
+```
 
 ## Commands
 
@@ -144,7 +164,7 @@ metrics that genuinely demand attention.
 - [x] **Phase 13** — Public project pages
 - [x] **Phase 14** — Testing, security, performance
 - [x] **Phase 15** — Animation and responsive polish
-- [ ] **Phase 16** — Deployment and release
+- [x] **Phase 16** — Deployment and release
 
 ## License
 
