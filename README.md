@@ -66,7 +66,8 @@ Sign in with **demo@devflow.app** / **devflow123**.
 > Already have PostgreSQL installed? Skip step 2 and point `DATABASE_URL` at
 > your own server instead — the schema is standard PostgreSQL.
 
-Open [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:3000](http://localhost:3000). Or skip the setup entirely
+and use the [live app](https://devflow-pink-nu.vercel.app).
 
 ## Environment variables
 
